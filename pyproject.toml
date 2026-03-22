@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zaina-ml-forge"
+version = "1.0.1"
+description = "Visual Drag-and-drop Machine Learning Trainer"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.11"
+authors = [
+    {name = "zain-a"}
+]
+keywords = ["machine learning", "pytorch", "visual", "no-code"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "dearpygui>=1.11.0",
+    "Pillow>=9.0.0",
+]
+
+[project.optional-dependencies]
+training = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+]
+
+[tool.setuptools.package-data]
+"ml_forge" = ["templates/*.mlf"]
+
+[project.scripts]
+ml-forge = "ml_forge.main:main"
+
+[project.urls]
+Homepage = "https://github.com/zaina-ml/ml_forge"

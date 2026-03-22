@@ -1,0 +1,464 @@
+{
+  "version": 1,
+  "tabs": [
+    {
+      "name": "Data Prep",
+      "role": "data_prep",
+      "nodes": [
+        {
+          "nid": 1,
+          "label": "CIFAR10",
+          "pos": [
+            40,
+            40
+          ],
+          "params": {
+            "root": "./data",
+            "train": "True",
+            "download": "True"
+          }
+        },
+        {
+          "nid": 2,
+          "label": "RandomCrop",
+          "pos": [
+            280,
+            40
+          ],
+          "params": {
+            "size": "32",
+            "padding": "4"
+          }
+        },
+        {
+          "nid": 3,
+          "label": "RandomHFlip",
+          "pos": [
+            500,
+            40
+          ],
+          "params": {
+            "p": "0.5"
+          }
+        },
+        {
+          "nid": 4,
+          "label": "ToTensor",
+          "pos": [
+            700,
+            40
+          ],
+          "params": {}
+        },
+        {
+          "nid": 5,
+          "label": "Normalize",
+          "pos": [
+            900,
+            40
+          ],
+          "params": {
+            "mean": "[0.4914, 0.4822, 0.4465]",
+            "std": "[0.2470, 0.2435, 0.2616]"
+          }
+        },
+        {
+          "nid": 6,
+          "label": "DataLoader (train)",
+          "pos": [
+            1120,
+            40
+          ],
+          "params": {
+            "batch_size": "128",
+            "shuffle": "True",
+            "num_workers": "2",
+            "pin_memory": "True"
+          }
+        },
+        {
+          "nid": 7,
+          "label": "CIFAR10",
+          "pos": [
+            40,
+            280
+          ],
+          "params": {
+            "root": "./data",
+            "train": "False",
+            "download": "True"
+          }
+        },
+        {
+          "nid": 8,
+          "label": "ToTensor",
+          "pos": [
+            280,
+            280
+          ],
+          "params": {}
+        },
+        {
+          "nid": 9,
+          "label": "Normalize",
+          "pos": [
+            500,
+            280
+          ],
+          "params": {
+            "mean": "[0.4914, 0.4822, 0.4465]",
+            "std": "[0.2470, 0.2435, 0.2616]"
+          }
+        },
+        {
+          "nid": 10,
+          "label": "DataLoader (val)",
+          "pos": [
+            720,
+            280
+          ],
+          "params": {
+            "batch_size": "128",
+            "num_workers": "2",
+            "pin_memory": "True"
+          }
+        }
+      ],
+      "links": [
+        {
+          "link_id": 1,
+          "src_attr": "node_1_1_out_img",
+          "dst_attr": "node_1_2_in_img"
+        },
+        {
+          "link_id": 2,
+          "src_attr": "node_1_2_out_img",
+          "dst_attr": "node_1_3_in_img"
+        },
+        {
+          "link_id": 3,
+          "src_attr": "node_1_3_out_img",
+          "dst_attr": "node_1_4_in_img"
+        },
+        {
+          "link_id": 4,
+          "src_attr": "node_1_4_out_img",
+          "dst_attr": "node_1_5_in_img"
+        },
+        {
+          "link_id": 5,
+          "src_attr": "node_1_5_out_img",
+          "dst_attr": "node_1_6_in_img"
+        },
+        {
+          "link_id": 6,
+          "src_attr": "node_1_7_out_img",
+          "dst_attr": "node_1_8_in_img"
+        },
+        {
+          "link_id": 7,
+          "src_attr": "node_1_8_out_img",
+          "dst_attr": "node_1_9_in_img"
+        },
+        {
+          "link_id": 8,
+          "src_attr": "node_1_9_out_img",
+          "dst_attr": "node_1_10_in_img"
+        }
+      ]
+    },
+    {
+      "name": "Model",
+      "role": "model",
+      "nodes": [
+        {
+          "nid": 1,
+          "label": "Input",
+          "pos": [
+            40,
+            100
+          ],
+          "params": {
+            "shape": "3, 32, 32"
+          }
+        },
+        {
+          "nid": 2,
+          "label": "Conv2D",
+          "pos": [
+            243,
+            -98
+          ],
+          "params": {
+            "in_channels": "3",
+            "out_channels": "32",
+            "kernel_size": "3",
+            "stride": "1",
+            "padding": "1"
+          }
+        },
+        {
+          "nid": 3,
+          "label": "ReLU",
+          "pos": [
+            477,
+            116
+          ],
+          "params": {}
+        },
+        {
+          "nid": 4,
+          "label": "MaxPool2D",
+          "pos": [
+            571,
+            -94
+          ],
+          "params": {
+            "kernel_size": "2",
+            "stride": "2",
+            "padding": "0"
+          }
+        },
+        {
+          "nid": 5,
+          "label": "Conv2D",
+          "pos": [
+            809,
+            28
+          ],
+          "params": {
+            "in_channels": "32",
+            "out_channels": "64",
+            "kernel_size": "3",
+            "stride": "1",
+            "padding": "1"
+          }
+        },
+        {
+          "nid": 6,
+          "label": "ReLU",
+          "pos": [
+            1075,
+            10
+          ],
+          "params": {}
+        },
+        {
+          "nid": 7,
+          "label": "MaxPool2D",
+          "pos": [
+            1171,
+            26
+          ],
+          "params": {
+            "kernel_size": "2",
+            "stride": "2",
+            "padding": "0"
+          }
+        },
+        {
+          "nid": 8,
+          "label": "Flatten",
+          "pos": [
+            37,
+            265
+          ],
+          "params": {
+            "start_dim": "1",
+            "end_dim": "-1"
+          }
+        },
+        {
+          "nid": 9,
+          "label": "Linear",
+          "pos": [
+            265,
+            387
+          ],
+          "params": {
+            "in_features": "4096",
+            "out_features": "512"
+          }
+        },
+        {
+          "nid": 10,
+          "label": "ReLU",
+          "pos": [
+            540,
+            275
+          ],
+          "params": {}
+        },
+        {
+          "nid": 11,
+          "label": "Dropout",
+          "pos": [
+            627,
+            428
+          ],
+          "params": {
+            "p": "0.5"
+          }
+        },
+        {
+          "nid": 12,
+          "label": "Linear",
+          "pos": [
+            823,
+            263
+          ],
+          "params": {
+            "in_features": "512",
+            "out_features": "10"
+          }
+        },
+        {
+          "nid": 13,
+          "label": "Output",
+          "pos": [
+            1043,
+            434
+          ],
+          "params": {
+            "shape": "10"
+          }
+        }
+      ],
+      "links": [
+        {
+          "link_id": 1,
+          "src_attr": "node_2_1_out_out",
+          "dst_attr": "node_2_2_in_x"
+        },
+        {
+          "link_id": 2,
+          "src_attr": "node_2_2_out_out",
+          "dst_attr": "node_2_3_in_x"
+        },
+        {
+          "link_id": 3,
+          "src_attr": "node_2_3_out_out",
+          "dst_attr": "node_2_4_in_x"
+        },
+        {
+          "link_id": 4,
+          "src_attr": "node_2_4_out_out",
+          "dst_attr": "node_2_5_in_x"
+        },
+        {
+          "link_id": 5,
+          "src_attr": "node_2_5_out_out",
+          "dst_attr": "node_2_6_in_x"
+        },
+        {
+          "link_id": 6,
+          "src_attr": "node_2_6_out_out",
+          "dst_attr": "node_2_7_in_x"
+        },
+        {
+          "link_id": 7,
+          "src_attr": "node_2_7_out_out",
+          "dst_attr": "node_2_8_in_x"
+        },
+        {
+          "link_id": 8,
+          "src_attr": "node_2_8_out_out",
+          "dst_attr": "node_2_9_in_x"
+        },
+        {
+          "link_id": 9,
+          "src_attr": "node_2_9_out_out",
+          "dst_attr": "node_2_10_in_x"
+        },
+        {
+          "link_id": 10,
+          "src_attr": "node_2_10_out_out",
+          "dst_attr": "node_2_11_in_x"
+        },
+        {
+          "link_id": 11,
+          "src_attr": "node_2_11_out_out",
+          "dst_attr": "node_2_12_in_x"
+        },
+        {
+          "link_id": 12,
+          "src_attr": "node_2_12_out_out",
+          "dst_attr": "node_2_13_in_x"
+        }
+      ]
+    },
+    {
+      "name": "Training",
+      "role": "training",
+      "nodes": [
+        {
+          "nid": 1,
+          "label": "CrossEntropyLoss",
+          "pos": [
+            374,
+            89
+          ],
+          "params": {
+            "weight": "",
+            "ignore_index": "",
+            "reduction": "mean"
+          }
+        },
+        {
+          "nid": 4,
+          "label": "ModelBlock",
+          "pos": [
+            189,
+            96
+          ],
+          "params": {}
+        },
+        {
+          "nid": 5,
+          "label": "DataLoaderBlock",
+          "pos": [
+            63,
+            302
+          ],
+          "params": {}
+        },
+        {
+          "nid": 6,
+          "label": "Adam",
+          "pos": [
+            780,
+            267
+          ],
+          "params": {
+            "lr": "0.001",
+            "betas": "",
+            "eps": "",
+            "weight_decay": ""
+          }
+        }
+      ],
+      "links": [
+        {
+          "link_id": 1,
+          "src_attr": "node_3_5_out_images",
+          "dst_attr": "node_3_4_in_images"
+        },
+        {
+          "link_id": 2,
+          "src_attr": "node_3_5_out_labels",
+          "dst_attr": "node_3_1_in_target"
+        },
+        {
+          "link_id": 3,
+          "src_attr": "node_3_4_out_predictions",
+          "dst_attr": "node_3_1_in_pred"
+        },
+        {
+          "link_id": 4,
+          "src_attr": "node_3_1_out_loss",
+          "dst_attr": "node_3_6_in_params"
+        }
+      ]
+    }
+  ]
+}

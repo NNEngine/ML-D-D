@@ -1,0 +1,278 @@
+{
+  "version": 1,
+  "tabs": [
+    {
+      "name": "Data Prep",
+      "role": "data_prep",
+      "nodes": [
+        {
+          "nid": 1,
+          "label": "MNIST",
+          "pos": [
+            40,
+            60
+          ],
+          "params": {
+            "root": "./data",
+            "train": "True",
+            "download": "True"
+          }
+        },
+        {
+          "nid": 2,
+          "label": "ToTensor",
+          "pos": [
+            300,
+            60
+          ],
+          "params": {}
+        },
+        {
+          "nid": 4,
+          "label": "DataLoader (train)",
+          "pos": [
+            760,
+            60
+          ],
+          "params": {
+            "batch_size": "64",
+            "shuffle": "True",
+            "num_workers": "2",
+            "pin_memory": "True"
+          }
+        },
+        {
+          "nid": 5,
+          "label": "MNIST",
+          "pos": [
+            40,
+            280
+          ],
+          "params": {
+            "root": "./data",
+            "train": "False",
+            "download": "True"
+          }
+        },
+        {
+          "nid": 6,
+          "label": "ToTensor",
+          "pos": [
+            300,
+            280
+          ],
+          "params": {}
+        },
+        {
+          "nid": 8,
+          "label": "DataLoader (val)",
+          "pos": [
+            760,
+            280
+          ],
+          "params": {
+            "batch_size": "64",
+            "num_workers": "2",
+            "pin_memory": "True"
+          }
+        }
+      ],
+      "links": [
+        {
+          "link_id": 1,
+          "src_attr": "node_1_1_out_img",
+          "dst_attr": "node_1_2_in_img"
+        },
+        {
+          "link_id": 4,
+          "src_attr": "node_1_5_out_img",
+          "dst_attr": "node_1_6_in_img"
+        },
+        {
+          "link_id": 7,
+          "src_attr": "node_1_6_out_img",
+          "dst_attr": "node_1_8_in_img"
+        },
+        {
+          "link_id": 8,
+          "src_attr": "node_1_2_out_img",
+          "dst_attr": "node_1_4_in_img"
+        }
+      ]
+    },
+    {
+      "name": "Model",
+      "role": "model",
+      "nodes": [
+        {
+          "nid": 1,
+          "label": "Input",
+          "pos": [
+            40,
+            100
+          ],
+          "params": {
+            "shape": "1, 28, 28"
+          }
+        },
+        {
+          "nid": 2,
+          "label": "Flatten",
+          "pos": [
+            260,
+            100
+          ],
+          "params": {
+            "start_dim": "1",
+            "end_dim": "-1"
+          }
+        },
+        {
+          "nid": 3,
+          "label": "Linear",
+          "pos": [
+            480,
+            100
+          ],
+          "params": {
+            "in_features": "784",
+            "out_features": "256"
+          }
+        },
+        {
+          "nid": 4,
+          "label": "ReLU",
+          "pos": [
+            741,
+            102
+          ],
+          "params": {}
+        },
+        {
+          "nid": 5,
+          "label": "Linear",
+          "pos": [
+            847,
+            100
+          ],
+          "params": {
+            "in_features": "256",
+            "out_features": "10"
+          }
+        },
+        {
+          "nid": 6,
+          "label": "Output",
+          "pos": [
+            1140,
+            100
+          ],
+          "params": {
+            "shape": "10"
+          }
+        }
+      ],
+      "links": [
+        {
+          "link_id": 1,
+          "src_attr": "node_2_1_out_out",
+          "dst_attr": "node_2_2_in_x"
+        },
+        {
+          "link_id": 2,
+          "src_attr": "node_2_2_out_out",
+          "dst_attr": "node_2_3_in_x"
+        },
+        {
+          "link_id": 3,
+          "src_attr": "node_2_3_out_out",
+          "dst_attr": "node_2_4_in_x"
+        },
+        {
+          "link_id": 4,
+          "src_attr": "node_2_4_out_out",
+          "dst_attr": "node_2_5_in_x"
+        },
+        {
+          "link_id": 5,
+          "src_attr": "node_2_5_out_out",
+          "dst_attr": "node_2_6_in_x"
+        }
+      ]
+    },
+    {
+      "name": "Training",
+      "role": "training",
+      "nodes": [
+        {
+          "nid": 1,
+          "label": "CrossEntropyLoss",
+          "pos": [
+            492,
+            61
+          ],
+          "params": {
+            "weight": "",
+            "ignore_index": "",
+            "reduction": "mean"
+          }
+        },
+        {
+          "nid": 2,
+          "label": "Adam",
+          "pos": [
+            777,
+            293
+          ],
+          "params": {
+            "lr": "0.001",
+            "betas": "",
+            "eps": "",
+            "weight_decay": "",
+            "lr_scheduler": ""
+          }
+        },
+        {
+          "nid": 3,
+          "label": "ModelBlock",
+          "pos": [
+            281,
+            93
+          ],
+          "params": {}
+        },
+        {
+          "nid": 4,
+          "label": "DataLoaderBlock",
+          "pos": [
+            137,
+            266
+          ],
+          "params": {}
+        }
+      ],
+      "links": [
+        {
+          "link_id": 1,
+          "src_attr": "node_3_4_out_images",
+          "dst_attr": "node_3_3_in_images"
+        },
+        {
+          "link_id": 2,
+          "src_attr": "node_3_3_out_predictions",
+          "dst_attr": "node_3_1_in_pred"
+        },
+        {
+          "link_id": 3,
+          "src_attr": "node_3_4_out_labels",
+          "dst_attr": "node_3_1_in_target"
+        },
+        {
+          "link_id": 4,
+          "src_attr": "node_3_1_out_loss",
+          "dst_attr": "node_3_2_in_params"
+        }
+      ]
+    }
+  ]
+}
