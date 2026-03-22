@@ -5,8 +5,8 @@ Model summary panel.
 
 import dearpygui.dearpygui as dpg
 
-from ml_forge.engine.blocks import get_block_def
-from ml_forge.graph.nodes   import input_field_tag
+from ml_D_D.engine.blocks import get_block_def
+from ml_D_D.graph.nodes   import input_field_tag
 
 
 def _safe_int(v) -> int:

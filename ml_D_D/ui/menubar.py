@@ -9,12 +9,12 @@ import ml_forge.state as state
 
 
 def build_menubar() -> None:
-    from ml_forge.graph.nodes       import delete_selected_nodes, clear_canvas
-    from ml_forge.graph.tabs        import new_tab, close_tab, open_assign_role_dialog
-    from ml_forge.graph.undo        import undo, redo
-    from ml_forge.ui.training       import on_run, on_pause, on_stop
-    from ml_forge.engine.generator  import export_pytorch
-    from ml_forge.filesystem.save   import save_current, open_save_dialog, open_load_dialog
+    from ml_D_D.graph.nodes       import delete_selected_nodes, clear_canvas
+    from ml_D_D.graph.tabs        import new_tab, close_tab, open_assign_role_dialog
+    from ml_D_D.graph.undo        import undo, redo
+    from ml_D_D.ui.training       import on_run, on_pause, on_stop
+    from ml_D_D.engine.generator  import export_pytorch
+    from ml_D_D.filesystem.save   import save_current, open_save_dialog, open_load_dialog
 
     with dpg.viewport_menu_bar():
         dpg.add_text("ML Forge", color=(100, 200, 255))
@@ -79,7 +79,7 @@ def build_menubar() -> None:
                        callback=on_pause, enabled=False)
         dpg.add_button(label="STOP",    tag="btn_stop",  small=True,
                        callback=on_stop, enabled=False)
-        
+
         dpg.add_separator()
         dpg.add_button(label="METRICS", tag="btn_metrics", small=True,
                        callback=lambda: __import__("ml_forge.engine.metrics", fromlist=["open_metrics_window"]).open_metrics_window())

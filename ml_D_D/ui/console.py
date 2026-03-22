@@ -6,8 +6,8 @@ Console log helper functions.
 import time
 import dearpygui.dearpygui as dpg
 
-import ml_forge.state as state
-from ml_forge.constants import LOG_COLORS, LOG_PREFIXES, CONSOLE_MAX_LINES
+import ml_D_D.state as state
+from ml_D_D.constants import LOG_COLORS, LOG_PREFIXES, CONSOLE_MAX_LINES
 
 
 def log(msg: str, level: str = "info") -> None:

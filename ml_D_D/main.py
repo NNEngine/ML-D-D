@@ -10,18 +10,18 @@ import time
 import dearpygui.dearpygui as dpg
 
 # Core IMports
-from ml_forge.ui.console       import log
-from ml_forge.graph.nodes      import delete_selected_nodes
-from ml_forge.ui.palette       import rebuild_palette
-from ml_forge.graph.pipeline   import refresh_pipeline_bar
-from ml_forge.graph.tabs       import new_tab, sync_active_tab
-from ml_forge.ui.training      import apply_train_btn_style, tick_training
-from ml_forge.graph.undo       import refresh_undo_menu
+from ml_D_D.ui.console       import log
+from ml_D_D.graph.nodes      import delete_selected_nodes
+from ml_D_D.ui.palette       import rebuild_palette
+from ml_D_D.graph.pipeline   import refresh_pipeline_bar
+from ml_D_D.graph.tabs       import new_tab, sync_active_tab
+from ml_D_D.ui.training      import apply_train_btn_style, tick_training
+from ml_D_D.graph.undo       import refresh_undo_menu
 
 # UI builders
-from ml_forge.ui.menubar import build_menubar
-from ml_forge.ui.layout  import build_main_window
-from ml_forge.ui.resize  import resize_callback
+from ml_D_D.ui.menubar import build_menubar
+from ml_D_D.ui.layout  import build_main_window
+from ml_D_D.ui.resize  import resize_callback
 
 
 #  Splash helpers
@@ -144,7 +144,7 @@ def main() -> None:
         now       = time.time()
         dt        = now - prev_time
         prev_time = now
-        
+
         if dpg.is_key_pressed(dpg.mvKey_Delete):
             delete_selected_nodes()
 

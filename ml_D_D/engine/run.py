@@ -24,9 +24,9 @@ import time
 
 import dearpygui.dearpygui as dpg
 
-import ml_forge.state as state
-from ml_forge.ui.console import log
-from ml_forge.engine.graph import build_graph, topological_sort, get_tab_by_role
+import ml_D_D.state as state
+from ml_D_D.ui.console import log
+from ml_D_D.engine.graph import build_graph, topological_sort, get_tab_by_role
 
 
 # Resolving Device

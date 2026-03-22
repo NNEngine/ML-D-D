@@ -9,9 +9,9 @@ This means undo/redo fully restores a node including everything typed into it.
 import copy
 import dearpygui.dearpygui as dpg
 
-import ml_forge.state as state
-from ml_forge.constants import MAX_UNDO
-from ml_forge.ui.console import log
+import ml_D_D.state as state
+from ml_D_D.constants import MAX_UNDO
+from ml_D_D.ui.console import log
 
 
 # Snapshot helpers

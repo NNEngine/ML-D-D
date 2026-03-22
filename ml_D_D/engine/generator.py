@@ -12,7 +12,7 @@ Public:
 
 from __future__ import annotations
 import textwrap
-from ml_forge.engine.graph import build_graph, topological_sort, get_tab_by_role, GraphNode
+from ml_D_D.engine.graph import build_graph, topological_sort, get_tab_by_role, GraphNode
 
 
 #  PyTorch module name mapping

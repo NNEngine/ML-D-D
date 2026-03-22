@@ -10,7 +10,7 @@ using train=False on the dataset node.
 from __future__ import annotations
 import pathlib
 import dearpygui.dearpygui as dpg
-from ml_forge.ui.console import log
+from ml_D_D.ui.console import log
 
 
 # Texture

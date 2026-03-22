@@ -9,7 +9,7 @@ open to reflect the latest data.
 
 from __future__ import annotations
 import dearpygui.dearpygui as dpg
-import ml_forge.state as state
+import ml_D_D.state as state
 
 
 def open_metrics_window() -> None:

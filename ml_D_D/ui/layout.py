@@ -12,11 +12,11 @@ import math
 import time
 import dearpygui.dearpygui as dpg
 
-from ml_forge.constants      import PALETTE_W, TRAIN_W, CONSOLE_H, STATUSBAR_H
-from ml_forge.ui.console     import clear_console
-from ml_forge.ui.palette     import on_search
-from ml_forge.ui.summary     import refresh_model_summary
-from ml_forge.graph.tabs     import on_tab_change
+from ml_D_D.constants      import PALETTE_W, TRAIN_W, CONSOLE_H, STATUSBAR_H
+from ml_D_D.ui.console     import clear_console
+from ml_D_D.ui.palette     import on_search
+from ml_D_D.ui.summary     import refresh_model_summary
+from ml_D_D.graph.tabs     import on_tab_change
 
 PIPELINE_BAR_H = 24
 

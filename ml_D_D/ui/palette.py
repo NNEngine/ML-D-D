@@ -5,9 +5,9 @@ Block palette panel: search filtering and button rebuild.
 
 import dearpygui.dearpygui as dpg
 
-import ml_forge.state as state
-from ml_forge.engine.blocks import SECTIONS
-from ml_forge.constants import SECTION_COLORS
+import ml_D_D.state as state
+from ml_D_D.engine.blocks import SECTIONS
+from ml_D_D.constants import SECTION_COLORS
 
 
 def on_search(sender, app_data) -> None:

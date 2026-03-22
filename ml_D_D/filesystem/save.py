@@ -8,8 +8,8 @@ from __future__ import annotations
 import json
 import dearpygui.dearpygui as dpg
 
-import ml_forge.state as state
-from ml_forge.ui.console import log
+import ml_D_D.state as state
+from ml_D_D.ui.console import log
 
 FILE_VERSION = 1
 

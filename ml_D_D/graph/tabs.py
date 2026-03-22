@@ -6,8 +6,8 @@ active-tab sync that runs every frame in the render loop.
 
 import dearpygui.dearpygui as dpg
 
-import ml_forge.state as state
-from ml_forge.ui.console import log
+import ml_D_D.state as state
+from ml_D_D.ui.console import log
 
 
 # Tag helpers

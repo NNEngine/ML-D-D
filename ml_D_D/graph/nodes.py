@@ -8,9 +8,9 @@ Public variants are called from the UI and always push an undo snapshot first.
 
 import dearpygui.dearpygui as dpg
 
-import ml_forge.state as state
-from ml_forge.engine.blocks import get_block_def
-from ml_forge.constants import NODE_GRID_COLS, NODE_GRID_X_STEP, NODE_GRID_Y_STEP, NODE_GRID_ORIGIN
+import ml_D_D.state as state
+from ml_D_D.engine.blocks import get_block_def
+from ml_D_D.constants import NODE_GRID_COLS, NODE_GRID_X_STEP, NODE_GRID_Y_STEP, NODE_GRID_ORIGIN
 
 
 def node_tag(tid: int, nid: int) -> str:

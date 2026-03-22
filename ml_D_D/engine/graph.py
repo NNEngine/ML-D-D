@@ -31,8 +31,8 @@ import dearpygui.dearpygui as dpg
 from dataclasses import dataclass, field
 from typing import Optional
 
-import ml_forge.state as state
-from ml_forge.engine.blocks import get_block_def
+import ml_D_D.state as state
+from ml_D_D.engine.blocks import get_block_def
 
 
 #  Data structures

@@ -7,9 +7,9 @@ node highlighting, and CUDA/VRAM menubar stats.
 import time
 import dearpygui.dearpygui as dpg
 
-import ml_forge.state as state
-from ml_forge.constants import TRAIN_BTN_STYLES
-from ml_forge.ui.console import log
+import ml_D_D.state as state
+from ml_D_D.constants import TRAIN_BTN_STYLES
+from ml_D_D.ui.console import log
 
 
 _cuda_checked = False
