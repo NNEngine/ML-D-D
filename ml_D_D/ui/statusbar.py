@@ -30,7 +30,7 @@ def _update_title() -> None:
     path = getattr(state, "current_file", None)
     if path:
         name = pathlib.Path(path).stem
-        title = f"ML Forge - {name}"
+        title = f"ML D&D - {name}"
     else:
         name  = "untitled"
         title = "ML Forge"

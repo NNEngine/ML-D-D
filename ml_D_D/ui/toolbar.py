@@ -10,8 +10,8 @@ from ml_D_D.constants import TOOLBAR_H
 
 
 def build_toolbar() -> None:
-    from ml_forge.graph.nodes import clear_canvas
-    from ml_forge.graph.tabs  import new_tab, close_tab
+    from ml_D_D.graph.nodes import clear_canvas
+    from ml_D_D.graph.tabs  import new_tab, close_tab
 
     with dpg.child_window(tag="toolbar", height=TOOLBAR_H,
                            border=False, no_scrollbar=True):

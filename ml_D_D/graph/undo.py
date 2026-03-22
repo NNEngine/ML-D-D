@@ -18,7 +18,7 @@ from ml_D_D.ui.console import log
 
 def _read_node_params(ntag: str, block_label: str) -> dict[str, str]:
     """Read current param field values for a node."""
-    from ml_forge.engine.blocks import get_block_def
+    from ml_D_D.engine.blocks import get_block_def
     block = get_block_def(block_label)
     if not block:
         return {}
@@ -50,8 +50,8 @@ def _snapshot(tid: int) -> dict:
 
 def _apply_snapshot(tid: int, snap: dict) -> None:
     """Wipe the canvas for tab `tid` and rebuild from snap."""
-    from ml_forge.graph.nodes import raw_delete_node, raw_spawn_node
-    from ml_forge.ui.statusbar import refresh_status
+    from ml_D_D.graph.nodes import raw_delete_node, raw_spawn_node
+    from ml_D_D.ui.statusbar import refresh_status
 
     t      = state.tabs[tid]
     editor = t["editor_tag"]

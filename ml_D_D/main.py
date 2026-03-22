@@ -36,7 +36,7 @@ def _build_splash(vw: int, vh: int) -> None:
                     modal=False, pos=(sx, sy), width=sw, height=sh):
 
         dpg.add_spacer(height=18)
-        dpg.add_text("ML Forge", tag="splash_title",
+        dpg.add_text("ML D&D", tag="splash_title",
                      color=(100, 200, 255))
 
         # Centre the title text manually after first render
@@ -79,7 +79,7 @@ def _close_splash() -> None:
 
 def main() -> None:
     dpg.create_context()
-    dpg.create_viewport(title="ML Forge", width=1380, height=820,
+    dpg.create_viewport(title="ML D&D", width=1380, height=820,
                         resizable=True)
     dpg.setup_dearpygui()
     dpg.show_viewport()
@@ -96,8 +96,8 @@ def main() -> None:
     dpg.set_primary_window("main_window", True)
     resize_callback()
 
-    import ml_forge.state as state
-    from ml_forge.graph.tabs import tab_tag
+    import ml_D_D.state as state
+    from ml_D_D.graph.tabs import tab_tag
 
     for tab_name, tab_role in [
         ("Data Prep", "data_prep"),
@@ -125,7 +125,7 @@ def main() -> None:
     apply_train_btn_style()
     refresh_undo_menu()
     refresh_pipeline_bar()
-    from ml_forge.ui.training import update_cuda_stats
+    from ml_D_D.ui.training import update_cuda_stats
     update_cuda_stats()
 
     _splash_step("Ready.", 1.0)
@@ -133,7 +133,7 @@ def main() -> None:
 
     _close_splash()
 
-    log("ML Forge ready.", "header")
+    log("ML-D-D ready.", "header")
     log("Build your pipeline across the three tabs: Data Prep -> Model -> Training.", "info")
     log("Press RUN when all three pipeline stages are complete.", "info")
 

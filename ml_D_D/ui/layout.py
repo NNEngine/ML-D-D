@@ -31,7 +31,7 @@ _demo_vacc  = [1 - math.exp(-0.18 * e) * 0.97   for e in _demo_e]
 
 
 def build_main_window() -> None:
-    from ml_forge.ui.toolbar import build_toolbar
+    from ml_D_D.ui.toolbar import build_toolbar
 
     with dpg.window(tag="main_window", no_title_bar=True, no_move=True,
                     no_resize=True, no_scrollbar=True, no_collapse=True):

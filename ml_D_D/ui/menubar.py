@@ -5,7 +5,7 @@ All callbacks are imported from their respective logic modules.
 """
 
 import dearpygui.dearpygui as dpg
-import ml_forge.state as state
+import ml_D_D.state as state
 
 
 def build_menubar() -> None:
@@ -17,7 +17,7 @@ def build_menubar() -> None:
     from ml_D_D.filesystem.save   import save_current, open_save_dialog, open_load_dialog
 
     with dpg.viewport_menu_bar():
-        dpg.add_text("ML Forge", color=(100, 200, 255))
+        dpg.add_text("ML D&D", color=(100, 200, 255))
         dpg.add_text("v1.0",     color=(120, 120, 140))
         dpg.add_separator()
 

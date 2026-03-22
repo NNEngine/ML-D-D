@@ -34,7 +34,7 @@ def new_tab(name: str | None = None, role: str | None = None) -> int:
     role: "data_prep" | "model" | "training" | None
     Returns the new tab id.
     """
-    from ml_forge.graph.links import link_callback, delink_callback
+    from ml_D_D.graph.links import link_callback, delink_callback
 
     state.tab_counter += 1
     tid  = state.tab_counter
@@ -303,7 +303,7 @@ def sync_active_tab() -> None:
     selected tab item - so we resolve each tab's tag to its item ID
     via dpg.get_alias_id() before comparing.
     """
-    from ml_forge.ui.statusbar import refresh_status
+    from ml_D_D.ui.statusbar import refresh_status
 
     if not dpg.does_item_exist("canvas_tabbar"):
         return
@@ -326,7 +326,7 @@ def on_tab_change(sender, app_data) -> None:
     DearPyGui callback - fires when user clicks a tab.
     app_data is the integer item ID of the newly selected tab.
     """
-    from ml_forge.ui.statusbar import refresh_status
+    from ml_D_D.ui.statusbar import refresh_status
 
     for tid in state.tabs:
         ttag = tab_tag(tid)

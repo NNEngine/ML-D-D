@@ -16,7 +16,7 @@ def on_search(sender, app_data) -> None:
 
 
 def rebuild_palette() -> None:
-    from ml_forge.graph.nodes import spawn_node
+    from ml_D_D.graph.nodes import spawn_node
 
     query = state.search_state["query"]
     dpg.delete_item("palette_content", children_only=True)
