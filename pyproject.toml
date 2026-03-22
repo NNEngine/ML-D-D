@@ -3,14 +3,14 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "zaina-ml-forge"
+name = "ML D&D"
 version = "1.0.1"
 description = "Visual Drag-and-drop Machine Learning Trainer"
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.11"
 authors = [
-    {name = "zain-a"}
+    {name = "Shivam Sharma"}
 ]
 keywords = ["machine learning", "pytorch", "visual", "no-code"]
 classifiers = [
@@ -31,10 +31,7 @@ training = [
 ]
 
 [tool.setuptools.package-data]
-"ml_forge" = ["templates/*.mlf"]
+"ML D&D" = ["templates/*.mlf"]
 
 [project.scripts]
-ml-forge = "ml_forge.main:main"
-
-[project.urls]
-Homepage = "https://github.com/zaina-ml/ml_forge"
+ml-forge = "ML D&D.main:main"

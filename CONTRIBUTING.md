@@ -22,7 +22,7 @@ Open an issue on GitHub with:
 4. Your OS, Python version, and PyTorch version
 5. The full error message or traceback if there is one
 
-The more detail the better. 
+The more detail the better.
 
 ---
 
@@ -41,9 +41,9 @@ Open an issue tagged `enhancement`. Describe:
 ### Setup
 
 ```
-git clone https://github.com/zaina-ml/ml_forge
-cd ml_forge
-python -m ml_forge
+git clone https://github.com/NNEngine/ML-D-D
+cd ML-D-D
+python -m ML-D-D
 ```
 
 ### Before you start
@@ -86,7 +86,7 @@ Stuff that needs to be added:
 
 1. Support for non-computer-vision datasets and custom datasets.
 2. Ability for users to import PyTorch definitions for custom blocks
-3. Skip connections or multi-input models 
+3. Skip connections or multi-input models
 
 ---
 
