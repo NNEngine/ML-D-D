@@ -106,3 +106,8 @@ Projects are saved as `.mlf` files (JSON). Use **File -> Save / Save As** or `Ct
 **File -> Export -> Python -> PyTorch** generates a standalone `train.py` that reproduces your pipeline. No ML Forge required to run it.
 
 ---
+
+## RUN
+```
+python -m ml_D_D
+```
