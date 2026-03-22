@@ -1,7 +1,7 @@
 # ML Forge
 
 A visual PyTorch pipeline editor. Build, train and run image classification models without writing code.
-![ML Forge screenshot](ml_forge/assets/showcase.gif)
+![ML Forge screenshot](ML D&D/assets/showcase.gif)
 ---
 
 ## What it does
@@ -11,13 +11,9 @@ A visual PyTorch pipeline editor. Build, train and run image classification mode
 - **Live training** - watch loss curves update in real time, save checkpoints, run inference on your trained model
 - **Export** - export projects into clean PyTorch
 
-## Tutorial
-Watch the MLForge tutorial video here: [MLForge Tutorial](https://www.youtube.com/watch?v=aSBxPpcXqzc)
-
----
 
 ## Requirements
-**IMPORTANT**: PyTorch must be preinstalled for training, it is not installed as a dependency. 
+**IMPORTANT**: PyTorch must be preinstalled for training, it is not installed as a dependency.
 
 - Python 3.10 or newer
 - PyTorch 2.0 or newer
@@ -29,34 +25,6 @@ pip install torch torchvision
 
 GPU training is automatic if CUDA is available. CPU and Apple MPS are also supported.
 
----
-
-## Quick Start
-
-To install MLForge, enter the following in your command prompt
-
-```
-pip install zaina-ml-forge
-```
-
-Then
-
-```
-ml-forge
-```
-
-
----
-
-## Cloning
-
-```
-git clone https://github.com/zaina-ml/ml-forge
-python -m ml_forge
-```
-
-
----
 
 ## Building your first model
 
@@ -123,7 +91,7 @@ After training, open **Run -> Inference**, browse to your checkpoint (`.pth`), a
 
 ## Metrics
 
-Click the **METRICS** button to see a summary of your training run: final loss, best validation accuracy, fit diagnosis, and loss/accuracy curves, you may also see the curves on the right training panel. 
+Click the **METRICS** button to see a summary of your training run: final loss, best validation accuracy, fit diagnosis, and loss/accuracy curves, you may also see the curves on the right training panel.
 
 ---
 
@@ -138,14 +106,3 @@ Projects are saved as `.mlf` files (JSON). Use **File -> Save / Save As** or `Ct
 **File -> Export -> Python -> PyTorch** generates a standalone `train.py` that reproduces your pipeline. No ML Forge required to run it.
 
 ---
-
-## Future Plans
-
-- Orient to a more beginner-friendly approach
-- Add custom block functionality
-
----
-
-## License
-
-MIT
