@@ -1,6 +1,6 @@
 # Contributing to MLForge
 
-Thanks for your interest in contributing! MLForge is a solo project that's grown faster than expected, and outside contributions are very welcome.
+Thanks for your interest in contributing! ML D&D is a solo project that's grown faster than expected, and outside contributions are very welcome.
 
 ---
 
@@ -53,7 +53,7 @@ python -m ML-D-D
 
 ### Adding a new block
 
-Blocks are defined in `ml_forge/blocks.py`. Each block is a dict with:
+Blocks are defined in `ml_D_D/blocks.py`. Each block is a dict with:
 
 ```
 {
@@ -65,7 +65,7 @@ Blocks are defined in `ml_forge/blocks.py`. Each block is a dict with:
 }
 ```
 
-Add it to the appropriate section in `SECTIONS`. If the block needs to generate PyTorch code on export, add a corresponding entry in `ml_forge/engine/generator.py` in the relevant map (`_LAYER_MAP`, `_LOSS_MAP`, `_OPTIM_MAP`, or `_DATASET_MAP`).
+Add it to the appropriate section in `SECTIONS`. If the block needs to generate PyTorch code on export, add a corresponding entry in `ml-D-D/engine/generator.py` in the relevant map (`_LAYER_MAP`, `_LOSS_MAP`, `_OPTIM_MAP`, or `_DATASET_MAP`).
 
 
 ### Pull requests

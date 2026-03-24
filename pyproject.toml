@@ -34,4 +34,4 @@ training = [
 "ML D&D" = ["templates/*.mlf"]
 
 [project.scripts]
-ml-forge = "ML D&D.main:main"
+ml-D-D = "ML D&D.main:main"
