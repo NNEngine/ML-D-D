@@ -8,6 +8,26 @@ import ml_D_D.state as state
 
 
 def link_callback(sender, app_data) -> None:
+    """
+    Handle creation of a new link between two node attributes in the DearPyGui node editor.
+
+    This callback is triggered when the user connects two node pins. It performs
+    the following operations:
+    - Retrieves the currently active tab and its graph state.
+    - Pushes the current state to the undo stack for rollback support.
+    - Generates a unique link tag and creates the visual link in the node editor.
+    - Stores the link mapping (source → destination) in the tab's state.
+    - Normalizes attribute identifiers (handles both integer IDs and string aliases).
+    - Attempts to auto-propagate dimension information and validate compatibility
+      between connected nodes using the autofill engine.
+
+    Args:
+        sender: The DearPyGui node editor widget that triggered the callback.
+        app_data: A tuple/list containing the source and destination attribute IDs.
+
+    Returns:
+        None
+    """
     from ml_D_D.graph.undo import push_undo
 
     tid = state.active_tab_id
@@ -41,6 +61,23 @@ def link_callback(sender, app_data) -> None:
 
 
 def delink_callback(sender, app_data) -> None:
+    """
+    Handle removal of an existing link in the DearPyGui node editor.
+
+    This callback is triggered when the user deletes a connection between nodes.
+    It performs the following operations:
+    - Retrieves the currently active tab and its graph state.
+    - Pushes the current state to the undo stack for rollback support.
+    - Deletes the visual link from the node editor (if it exists).
+    - Removes the corresponding link entry from the tab's internal state.
+
+    Args:
+        sender: The DearPyGui node editor widget that triggered the callback.
+        app_data: The unique tag/identifier of the link to be removed.
+
+    Returns:
+        None
+    """
     from ml_D_D.graph.undo import push_undo
 
     tid = state.active_tab_id
