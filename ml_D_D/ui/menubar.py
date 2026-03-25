@@ -63,7 +63,7 @@ def build_menubar() -> None:
         # Run
         with dpg.menu(label="Run"):
             dpg.add_menu_item(label="Inference...",
-                              callback=lambda: __import__("ml_forge.engine.inference", fromlist=["open_inference_window"]).open_inference_window())
+                              callback=lambda: __import__("ml_D_D.engine.inference", fromlist=["open_inference_window"]).open_inference_window())
 
         # Help
         with dpg.menu(label="Help"):
@@ -82,7 +82,7 @@ def build_menubar() -> None:
 
         dpg.add_separator()
         dpg.add_button(label="METRICS", tag="btn_metrics", small=True,
-                       callback=lambda: __import__("ml_forge.engine.metrics", fromlist=["open_metrics_window"]).open_metrics_window())
+                       callback=lambda: __import__("ml_D_D.engine.metrics", fromlist=["open_metrics_window"]).open_metrics_window())
 
         dpg.add_separator()
         dpg.add_text("VRAM:", color=(150, 150, 150))
@@ -95,9 +95,9 @@ def build_menubar() -> None:
 def _load_template(filename: str) -> None:
     """Load a bundled template without overwriting state.current_file."""
     import pathlib
-    from ml_forge.filesystem.save import load_project
-    from ml_forge.ui.console import log
-    import ml_forge.state as state
+    from ml_D_D.filesystem.save import load_project
+    from ml_D_D.ui.console import log
+    import ml_D_D.state as state
 
     templates_dir = pathlib.Path(__file__).parent.parent / "templates"
     path = templates_dir / filename
@@ -109,7 +109,7 @@ def _load_template(filename: str) -> None:
     load_project(str(path))
     state.current_file = None
     log("Template loaded. Use File > Save As to save your own copy.", "info")
-    from ml_forge.ui.statusbar import refresh_status
+    from ml_D_D.ui.statusbar import refresh_status
     refresh_status()
 
 
@@ -126,7 +126,7 @@ def _open_docs() -> None:
                     pos=((vw-ww)//2, (vh-wh)//2),
                     no_collapse=True):
 
-        dpg.add_text("ML Forge - Quick Reference", color=(100, 200, 255))
+        dpg.add_text("ML D&D - Quick Reference", color=(100, 200, 255))
         dpg.add_separator()
         dpg.add_spacer(height=6)
 

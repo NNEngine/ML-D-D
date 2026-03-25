@@ -50,7 +50,7 @@ def _build_torch_model(device):
     Raises ValueError if the graph cannot be instantiated.
     """
     import torch.nn as nn
-    from ml_forge.engine.generator import _LAYER_MAP, _p, _fill
+    from ml_D_D.engine.generator import _LAYER_MAP, _p, _fill
 
     tab = get_tab_by_role("model")
     if tab is None:
@@ -110,7 +110,7 @@ def _build_dataloaders(device, val_split: float, seed: int, shuffle: bool):
     from torch.utils.data import DataLoader, random_split
     from torchvision import datasets, transforms
     from torchvision.datasets import ImageFolder
-    from ml_forge.engine.graph import (topological_sort, get_tab_by_role,
+    from ml_D_D.engine.graph import (topological_sort, get_tab_by_role,
                                _DATASET_BLOCKS, _AUG_BLOCKS, build_graph)
 
     tab = get_tab_by_role("data_prep")
@@ -318,7 +318,7 @@ def _build_dataloaders(device, val_split: float, seed: int, shuffle: bool):
 def _build_criterion_and_optimizer(model, device):
     import torch.nn as nn
     import torch.optim as optim
-    from ml_forge.engine.generator import _LOSS_MAP, _OPTIM_MAP, _fill
+    from ml_D_D.engine.generator import _LOSS_MAP, _OPTIM_MAP, _fill
 
     tab = get_tab_by_role("training")
     if tab is None:
@@ -581,7 +581,7 @@ def drain_result_queue() -> None:
     Drain all pending results from the training thread and update the UI.
     Must be called from the main thread every frame.
     """
-    from ml_forge.ui.training import apply_train_btn_style, update_status_indicator
+    from ml_D_D.ui.training import apply_train_btn_style, update_status_indicator
 
     try:
         while True:
@@ -592,7 +592,7 @@ def drain_result_queue() -> None:
 
 
 def _handle_result(item: dict) -> None:
-    from ml_forge.ui.training import apply_train_btn_style, update_status_indicator
+    from ml_D_D.ui.training import apply_train_btn_style, update_status_indicator
 
     t = item["type"]
 
@@ -714,7 +714,7 @@ def _handle_result(item: dict) -> None:
         dpg.set_value("train_progress", 1.0 if t == "done" else 0.0)
         if "msg" in item:
             log(item["msg"], "success" if t == "done" else "warning")
-        from ml_forge.engine.training_setup import reset_block_labels
+        from ml_D_D.engine.training_setup import reset_block_labels
         reset_block_labels()
         apply_train_btn_style()
         update_status_indicator()

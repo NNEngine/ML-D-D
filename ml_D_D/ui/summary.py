@@ -25,8 +25,8 @@ PARAM_ESTIMATES: dict = {
 
 
 def refresh_model_summary() -> None:
-    import ml_forge.state as state
-    from ml_forge.graph.tabs import current_tab
+    import ml_D_D.state as state
+    from ml_D_D.graph.tabs import current_tab
 
     if not dpg.does_item_exist("summary_content"):
         return

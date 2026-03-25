@@ -150,13 +150,13 @@ def main() -> None:
 
         if dpg.is_key_down(dpg.mvKey_LControl):
             if dpg.is_key_pressed(dpg.mvKey_S):
-                from ml_forge.filesystem.save import save_current
+                from ml_D_D.filesystem.save import save_current
                 save_current()
             if dpg.is_key_pressed(dpg.mvKey_Z):
-                from ml_forge.graph.undo import undo
+                from ml_D_D.graph.undo import undo
                 undo()
             if dpg.is_key_pressed(dpg.mvKey_Y):
-                from ml_forge.graph.undo import redo
+                from ml_D_D.graph.undo import redo
                 redo()
 
         sync_active_tab()
@@ -169,7 +169,7 @@ def main() -> None:
             try:
                 t = state.tabs.get(state.active_tab_id)
                 if t and t.get("role") == "model":
-                    from ml_forge.engine.autofill import on_param_changed
+                    from ml_D_D.engine.autofill import on_param_changed
                     on_param_changed(t)
             except Exception:
                 pass
