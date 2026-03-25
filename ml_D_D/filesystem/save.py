@@ -15,6 +15,25 @@ FILE_VERSION = 1
 
 
 def _serialise_tab(tid: int, t: dict) -> dict:
+    """
+    Convert a tab's internal state into a serializable dictionary format.
+
+    This function extracts all nodes and links from a given tab and prepares
+    them for JSON storage. It includes:
+    - Node metadata (ID, label, position, parameters)
+    - Link connections (source and destination attributes)
+
+    It also resolves DearPyGui runtime values such as node positions and
+    input field values.
+
+    Args:
+        tid (int): The unique ID of the tab.
+        t (dict): The tab state dictionary containing nodes and links.
+
+    Returns:
+        dict: A JSON-serializable representation of the tab.
+    """
+
     nodes_out = []
     for ntag, node_info in t["nodes"].items():
         label  = node_info["label"] if isinstance(node_info, dict) else node_info
@@ -50,11 +69,35 @@ def _serialise_tab(tid: int, t: dict) -> dict:
 
 
 def _build_payload() -> dict:
+    """
+    Construct the complete project payload for saving.
+
+    Aggregates all tabs in the global state into a single dictionary,
+    including metadata such as file version.
+
+    Returns:
+        dict: The full project data structure ready for JSON serialization.
+    """
+
     return {"version": FILE_VERSION,
             "tabs": [_serialise_tab(tid, t) for tid, t in state.tabs.items()]}
 
 
 def save_project(path: str) -> None:
+    """
+    Save the current ML Forge project to a file.
+
+    This function serializes all tabs, nodes, and links into a structured
+    JSON format and writes it to disk. It also updates the current file
+    reference and refreshes the UI status.
+
+    Args:
+        path (str): The file path where the project should be saved.
+
+    Returns:
+        None
+    """
+
     try:
         payload = _build_payload()
         with open(path, "w", encoding="utf-8") as f:
@@ -68,6 +111,18 @@ def save_project(path: str) -> None:
 
 
 def _clear_all_tabs() -> None:
+    """
+    Remove all existing tabs and their associated nodes from the UI and state.
+
+    This function:
+    - Deletes all nodes using the graph node deletion utility.
+    - Removes tab UI elements from DearPyGui.
+    - Resets global tab-related state variables.
+
+    Returns:
+        None
+    """
+
     from ml_forge.graph.nodes import raw_delete_node
     for tid in list(state.tabs.keys()):
         t = state.tabs[tid]
@@ -82,6 +137,24 @@ def _clear_all_tabs() -> None:
 
 
 def _restore_tab(tab_data: dict) -> None:
+    """
+    Reconstruct a tab from serialized project data.
+
+    This function recreates:
+    - The tab UI and its metadata (name, role)
+    - All nodes with their positions and parameters
+    - All links between nodes
+
+    It ensures proper restoration of graph structure and updates internal
+    counters such as link IDs.
+
+    Args:
+        tab_data (dict): Serialized tab data from a project file.
+
+    Returns:
+        None
+    """
+
     from ml_forge.graph.tabs  import new_tab
     from ml_forge.graph.nodes import raw_spawn_node
     from ml_forge.ui.resize   import resize_callback
@@ -129,6 +202,26 @@ def _restore_tab(tab_data: dict) -> None:
 
 
 def load_project(path: str) -> None:
+    """
+    Load an ML Forge project from a file and restore its full state.
+
+    This function:
+    - Reads and parses the project file (JSON format).
+    - Validates file version compatibility.
+    - Clears existing tabs and UI state.
+    - Reconstructs all tabs, nodes, and links.
+    - Restores UI elements such as active tab and pipeline state.
+
+    It also triggers post-load processes like undo menu refresh,
+    pipeline updates, and optional dataset-based inference.
+
+    Args:
+        path (str): The file path of the project to load.
+
+    Returns:
+        None
+    """
+
     from ml_forge.ui.statusbar    import refresh_status
     from ml_forge.graph.undo      import refresh_undo_menu
     from ml_forge.graph.pipeline  import refresh_pipeline_bar
@@ -172,6 +265,25 @@ def load_project(path: str) -> None:
 
 
 def _make_dialog(label: str, tag: str, callback, default_filename: str = "") -> None:
+    """
+    Create a reusable file dialog for saving or loading projects.
+
+    This function builds a DearPyGui file dialog with:
+    - Custom label and tag
+    - File type filters (.mlf, .json, all files)
+    - Callback for handling user selection
+    - Cancel handler for cleanup
+
+    Args:
+        label (str): Display label for the dialog window.
+        tag (str): Unique identifier for the dialog.
+        callback: Function to handle file selection.
+        default_filename (str, optional): Suggested default filename.
+
+    Returns:
+        None
+    """
+
     if dpg.does_item_exist(tag):
         dpg.delete_item(tag)
 
@@ -188,6 +300,16 @@ def _make_dialog(label: str, tag: str, callback, default_filename: str = "") -> 
 
 
 def open_save_dialog() -> None:
+    """
+    Open a file dialog for saving the current project.
+
+    Allows the user to select a file path and ensures the correct file
+    extension is applied. Triggers project saving upon confirmation.
+
+    Returns:
+        None
+    """
+
     def _on_save(sender, app_data):
         path = app_data.get("file_path_name", "")
         if not path:
@@ -201,6 +323,16 @@ def open_save_dialog() -> None:
 
 
 def open_load_dialog() -> None:
+    """
+    Open a file dialog for loading a project.
+
+    Allows the user to select a project file and triggers loading of
+    the selected file into the application.
+
+    Returns:
+        None
+    """
+
     def _on_load(sender, app_data):
         path = app_data.get("file_path_name", "")
         if not path:
@@ -212,6 +344,15 @@ def open_load_dialog() -> None:
 
 
 def save_current() -> None:
+    """
+    Save the project to the currently associated file path.
+
+    If a file path is already known, the project is saved directly.
+    Otherwise, a save dialog is opened for the user to choose a path.
+
+    Returns:
+        None
+    """
     path = getattr(state, "current_file", None)
     if path:
         save_project(path)
