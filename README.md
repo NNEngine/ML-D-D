@@ -1,7 +1,7 @@
 # ML D&D
 
 A visual PyTorch pipeline editor. Build, train and run image classification models without writing code.
-![ML D&D screenshot](ml_D_D/assets/showcase.gif)
+![ML D&D screenshot](https://raw.githubusercontent.com/NNEngine/ML-D-D/main/ml_D_D/assets/showcase.gif)
 ---
 
 ## What it does
