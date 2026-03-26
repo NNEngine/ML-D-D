@@ -10,6 +10,31 @@ from ml_D_D.constants import TOOLBAR_H
 
 
 def build_toolbar() -> None:
+    """
+    Build the top toolbar UI for canvas-level actions.
+
+    This toolbar provides quick-access controls for:
+        - Clearing the current canvas
+        - Creating a new tab
+        - Closing the active tab
+        - Displaying user interaction hints
+
+    The toolbar is rendered as a horizontal child window positioned
+    above the main canvas area.
+
+    UI Elements:
+        - "Clear" button: Removes all nodes from the current canvas
+        - "+ New Tab" button: Creates a new pipeline tab
+        - "x Close Tab" button: Closes the currently active tab
+        - Instruction text: Displays shortcuts and interaction hints
+
+    Notes:
+        - Uses DearPyGui grouping for horizontal layout
+        - Relies on global application state for active tab tracking
+
+    Returns:
+        None
+    """
     from ml_D_D.graph.nodes import clear_canvas
     from ml_D_D.graph.tabs  import new_tab, close_tab
 

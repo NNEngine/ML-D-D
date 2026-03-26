@@ -98,7 +98,7 @@ def ensure_pipeline_inputs() -> None:
     if tid is None:
         return
 
-    from ml_forge.graph.nodes import raw_spawn_node
+    from ml_D_D.graph.nodes import raw_spawn_node
 
     model_tag  = _ntag(tid, _MODEL_NID)
     loader_tag = _ntag(tid, _DATALOADER_NID)
@@ -138,7 +138,7 @@ def _lock_node(ntag: str) -> None:
 
 
 def update_block_labels() -> None:
-     """
+    """
     Update labels or display information for training pipeline blocks.
 
     Intended to dynamically refresh node labels (e.g., model name, dataset info,

@@ -13,6 +13,19 @@ import ml_D_D.state as state
 
 
 def open_metrics_window() -> None:
+    """
+    Create and display the training metrics window.
+
+    This window provides:
+        - Current training status
+        - Final and best epoch statistics
+        - Loss and accuracy curves
+        - Batch-level loss visualization
+        - Basic overfitting/underfitting diagnosis
+
+    The data is sourced from `state.train_state` and reflects
+    the most recent training session.
+    """
     tag = "metrics_window"
     if dpg.does_item_exist(tag):
         dpg.delete_item(tag)
@@ -72,6 +85,14 @@ def open_metrics_window() -> None:
         final_va = va[-1]  if va else None
 
         def _row(label, value, color=(200, 200, 200)):
+            """
+            Render a single key-value row in the summary section.
+
+            Args:
+                label (str): Label text.
+                value (str): Value text.
+                color (tuple): RGB color for the value.
+            """
             with dpg.group(horizontal=True):
                 dpg.add_text(f"{label:<28}", color=(160, 160, 160))
                 dpg.add_text(value, color=color)
@@ -160,7 +181,12 @@ def open_metrics_window() -> None:
 
 
 def _refresh(tag: str) -> None:
-    """Close and reopen the window to pull latest data."""
+    """
+    Refresh the metrics window.
+
+    Closes and reopens the window to reload the latest
+    training data from state.
+    """
     if dpg.does_item_exist(tag):
         dpg.delete_item(tag)
     open_metrics_window()

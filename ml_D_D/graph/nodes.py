@@ -1,9 +1,12 @@
 """
 nodes.py
-Node spawn and delete operations, both raw (no undo) and public (with undo).
 
-Raw variants are used internally by the undo/redo snapshot system.
-Public variants are called from the UI and always push an undo snapshot first.
+Node creation and deletion utilities for the graph editor.
+
+This module provides both raw operations (no undo tracking) and public
+operations (with undo integration). Raw functions are used internally by
+state restoration and persistence layers, while public functions are
+invoked through the UI and always record undo snapshots.
 """
 
 import dearpygui.dearpygui as dpg
@@ -14,39 +17,106 @@ from ml_D_D.constants import NODE_GRID_COLS, NODE_GRID_X_STEP, NODE_GRID_Y_STEP,
 
 
 def node_tag(tid: int, nid: int) -> str:
+    """
+    Generate a unique node tag identifier.
+
+    Args:
+        tid (int): Tab ID.
+        nid (int): Node ID.
+
+    Returns:
+        str: Formatted node tag string.
+    """
     return f"node_{tid}_{nid}"
 
+
 def attr_in_tag(tid: int, nid: int, pin: str) -> str:
+    """
+    Generate a tag for an input attribute of a node.
+
+    Args:
+        tid (int): Tab ID.
+        nid (int): Node ID.
+        pin (str): Input pin name.
+
+    Returns:
+        str: Input attribute tag.
+    """
     return f"node_{tid}_{nid}_in_{pin}"
 
+
 def attr_out_tag(tid: int, nid: int, pin: str) -> str:
+    """
+    Generate a tag for an output attribute of a node.
+
+    Args:
+        tid (int): Tab ID.
+        nid (int): Node ID.
+        pin (str): Output pin name.
+
+    Returns:
+        str: Output attribute tag.
+    """
     return f"node_{tid}_{nid}_out_{pin}"
 
+
 def attr_param_tag(tid: int, nid: int, param: str) -> str:
+    """
+    Generate a tag for a parameter attribute of a node.
+
+    Args:
+        tid (int): Tab ID.
+        nid (int): Node ID.
+        param (str): Parameter name.
+
+    Returns:
+        str: Parameter attribute tag.
+    """
     return f"node_{tid}_{nid}_param_{param}"
 
+
 def input_field_tag(tid: int, nid: int, param: str) -> str:
+    """
+    Generate a tag for an input field associated with a node parameter.
+
+    Args:
+        tid (int): Tab ID.
+        nid (int): Node ID.
+        param (str): Parameter name.
+
+    Returns:
+        str: Input field tag.
+    """
     return f"node_{tid}_{nid}_input_{param}"
+
 
 def raw_spawn_node(tid: int, block_label: str, nid: int | None = None,
                    pos: tuple | None = None,
                    params: dict | None = None) -> str | None:
     """
-    Spawn a node directly into tab `tid` without touching the undo stack.
-    Used by snapshot restore, persistence load, and the public spawn_node() wrapper.
+    Create a node in the specified tab without recording undo state.
+
+    This function is used internally for operations such as undo/redo,
+    project loading, and state restoration.
+
+    Behavior:
+        - Assigns a unique node ID if not provided
+        - Applies grid-based positioning if no position is specified
+        - Builds node UI elements (inputs, parameters, outputs)
+        - Applies theme styling based on block definition
 
     Args:
-        tid:         target tab id
-        block_label: block type name
-        nid:         force a specific node id (used by undo/load)
-        pos:         (x, y) canvas position; auto-grid if None
-        params:      dict of param_name -> value to pre-fill fields
+        tid (int): Target tab ID.
+        block_label (str): Block type identifier.
+        nid (int, optional): Explicit node ID.
+        pos (tuple, optional): (x, y) position in canvas.
+        params (dict, optional): Parameter values for initialization.
 
-    Returns the node_tag on success, None if block_label is unknown.
+    Returns:
+        str | None: Node tag if created successfully, otherwise None.
     """
     t = state.tabs[tid]
 
-    # Reserved NIDs (9000+) are used by system nodes like ModelBlock/DataLoaderBlock.
     RESERVED_NID_THRESHOLD = 9000
 
     if nid is None:
@@ -55,7 +125,6 @@ def raw_spawn_node(tid: int, block_label: str, nid: int | None = None,
     else:
         if nid < RESERVED_NID_THRESHOLD:
             t["node_counter"] = max(t["node_counter"], nid)
-        # Reserved NIDs: do not update node_counter at all
 
     block = get_block_def(block_label)
     if block is None:
@@ -71,13 +140,11 @@ def raw_spawn_node(tid: int, block_label: str, nid: int | None = None,
         pos_x = NODE_GRID_ORIGIN[0] + (col % NODE_GRID_COLS) * NODE_GRID_X_STEP
         pos_y = NODE_GRID_ORIGIN[1] + (col // NODE_GRID_COLS) * NODE_GRID_Y_STEP
     else:
-        # Fallback for reserved nodes spawned without an explicit pos
         pos_x, pos_y = NODE_GRID_ORIGIN
 
     with dpg.node(label=block_label, tag=ntag,
                   parent=t["editor_tag"], pos=(pos_x, pos_y)):
 
-        # Title bar colour theme
         with dpg.theme() as nth:
             with dpg.theme_component(dpg.mvNode):
                 dpg.add_theme_color(dpg.mvNodeCol_TitleBar,
@@ -117,23 +184,26 @@ def raw_spawn_node(tid: int, block_label: str, nid: int | None = None,
 
 def raw_delete_node(tid: int, ntag: str) -> None:
     """
-    Delete a node and all its connected links from tab `tid`
-    without touching the undo stack.
+    Remove a node and its associated links without recording undo state.
+
+    Args:
+        tid (int): Target tab ID.
+        ntag (str): Node tag identifier.
+
+    Returns:
+        None
     """
     t = state.tabs[tid]
     if dpg.does_item_exist(ntag):
-        # Resolve node's attribute item IDs to string aliases for comparison.
-        # dpg.get_item_children returns integer IDs; links store string aliases.
         raw_attrs  = dpg.get_item_children(ntag, slot=1) or []
         attr_aliases = set()
         for attr_id in raw_attrs:
             alias = dpg.get_item_alias(attr_id) if isinstance(attr_id, int) else attr_id
             if alias:
                 attr_aliases.add(alias)
-            attr_aliases.add(str(attr_id))  # keep int-as-string as fallback
+            attr_aliases.add(str(attr_id))
 
         for link_tag, (a1, a2) in list(t["links"].items()):
-            # Normalise stored endpoints to strings for comparison
             s1 = str(a1) if isinstance(a1, int) else a1
             s2 = str(a2) if isinstance(a2, int) else a2
             if s1 in attr_aliases or s2 in attr_aliases:
@@ -145,10 +215,20 @@ def raw_delete_node(tid: int, ntag: str) -> None:
     t["nodes"].pop(ntag, None)
 
 
-# Public (push undo first)
+# Public API
 
 def spawn_node(block_label: str) -> None:
-    """Spawn a node into the active tab, pushing an undo snapshot first."""
+    """
+    Create a node in the active tab with undo tracking.
+
+    This is the primary UI-facing function for node creation.
+
+    Args:
+        block_label (str): Block type to instantiate.
+
+    Returns:
+        None
+    """
     from ml_D_D.graph.undo   import push_undo
     from ml_D_D.graph.tabs   import current_tab, _remove_hint_node
     from ml_D_D.ui.statusbar import refresh_status
@@ -162,7 +242,6 @@ def spawn_node(block_label: str) -> None:
     refresh_status()
     _maybe_refresh_summary()
 
-    # Auto-fill shapes and propagate dimensions
     try:
         from ml_D_D.engine.autofill import on_node_spawned
         on_node_spawned(t)
@@ -171,7 +250,15 @@ def spawn_node(block_label: str) -> None:
 
 
 def delete_node(ntag: str) -> None:
-    """Delete a single node from the active tab with undo."""
+    """
+    Delete a specific node with undo support.
+
+    Args:
+        ntag (str): Node tag identifier.
+
+    Returns:
+        None
+    """
     from ml_D_D.graph.undo import push_undo
     from ml_D_D.ui.statusbar import refresh_status
 
@@ -182,7 +269,12 @@ def delete_node(ntag: str) -> None:
 
 
 def delete_selected_nodes() -> None:
-    """Delete all currently selected nodes in the active tab."""
+    """
+    Delete all currently selected nodes in the active tab.
+
+    Returns:
+        None
+    """
     from ml_D_D.graph.undo import push_undo
     from ml_D_D.graph.tabs import current_tab
     from ml_D_D.ui.statusbar import refresh_status
@@ -202,7 +294,14 @@ def delete_selected_nodes() -> None:
 
 
 def clear_canvas() -> None:
-    """Delete every node on the active tab's canvas."""
+    """
+    Remove all nodes from the active tab.
+
+    This operation records an undo snapshot before clearing.
+
+    Returns:
+        None
+    """
     from ml_D_D.graph.undo import push_undo
     from ml_D_D.graph.tabs import current_tab
     from ml_D_D.ui.statusbar import refresh_status
@@ -218,7 +317,15 @@ def clear_canvas() -> None:
 
 
 def _maybe_refresh_summary() -> None:
-    """Refresh the model summary panel if the active tab is the Model tab."""
+    """
+    Refresh the model summary panel when applicable.
+
+    Triggered after node mutations to ensure the summary reflects
+    the current graph state.
+
+    Returns:
+        None
+    """
     t = state.tabs.get(state.active_tab_id)
     if t and t.get("role") == "model":
         try:

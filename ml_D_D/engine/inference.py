@@ -21,6 +21,11 @@ _PREV_H  = 224
 
 
 def _ensure_texture() -> None:
+    """
+    Ensure the preview texture exists in DearPyGui.
+
+    Creates a default blank texture if it is not already registered.
+    """
     if dpg.does_item_exist(_TEX_TAG):
         return
     blank = [0.1, 0.1, 0.1, 1.0] * (_PREV_W * _PREV_H)
@@ -29,6 +34,12 @@ def _ensure_texture() -> None:
 
 
 def _pil_to_texture(pil_img) -> None:
+    """
+    Convert a PIL image into a DearPyGui-compatible texture.
+
+    Args:
+        pil_img (PIL.Image.Image): Input image to render.
+    """
     import numpy as np
     img  = pil_img.convert("RGBA").resize((_PREV_W, _PREV_H))
     data = (np.array(img, dtype=np.float32) / 255.0).flatten().tolist()
@@ -46,6 +57,14 @@ _state: dict = {
 # Window
 
 def open_inference_window() -> None:
+    """
+    Create and display the inference UI window.
+
+    Provides controls for:
+        - Selecting a model checkpoint
+        - Sampling dataset images
+        - Running inference and viewing predictions
+    """
     tag = "inference_window"
     if dpg.does_item_exist(tag):
         dpg.delete_item(tag)
@@ -116,6 +135,12 @@ def open_inference_window() -> None:
 
 
 def _apply_green_theme(item) -> None:
+    """
+    Apply a green visual theme to a DearPyGui button.
+
+    Args:
+        item: DearPyGui item identifier.
+    """
     with dpg.theme() as th:
         with dpg.theme_component(dpg.mvButton):
             dpg.add_theme_color(dpg.mvThemeCol_Button,        (40, 120, 60, 220))
@@ -124,7 +149,19 @@ def _apply_green_theme(item) -> None:
 
 
 def _browse_checkpoint() -> None:
+    """
+    Open a file dialog to select a model checkpoint file.
+
+    Updates the UI input field and internal state upon selection.
+    """
     def _cb(sender, app_data):
+        """
+        Callback executed when a checkpoint file is selected.
+
+        Args:
+            sender: UI sender.
+            app_data (dict): File dialog data.
+        """
         path = app_data.get("file_path_name", "")
         if path and dpg.does_item_exist("inf_ckpt_path"):
             dpg.set_value("inf_ckpt_path", path)
@@ -149,7 +186,7 @@ def _load_test_dataset():
     Returns (dataset, error_string).
     """
     from torchvision import datasets, transforms
-    from ml_forge.engine.graph import (topological_sort, get_tab_by_role,
+    from ml_D_D.engine.graph import (topological_sort, get_tab_by_role,
                                _DATASET_BLOCKS, _AUG_BLOCKS, build_graph)
 
     tab = get_tab_by_role("data_prep")
@@ -288,6 +325,9 @@ def _get_random_sample():
 # Actions
 
 def _new_sample() -> None:
+    """
+    Load a new random sample and display it in the UI.
+    """
     _set_status("Loading sample...")
     _clear_results()
     try:
@@ -303,9 +343,13 @@ def _new_sample() -> None:
 
 
 def _run_on_current_sample() -> None:
-    """Run inference on the currently loaded sample without fetching a new one."""
+    """
+    Run inference on the currently loaded sample.
+
+    Loads model checkpoint, performs forward pass,
+    and displays top-k predictions.
+    """
     if _state["last_sample"] is None:
-        # No sample yet — load one first automatically
         _new_sample()
         if _state["last_sample"] is None:
             return
@@ -332,7 +376,7 @@ def _run_on_current_sample() -> None:
     try:
         _, tensor, true_label = _state["last_sample"]
 
-        from ml_forge.engine.run import _build_torch_model, _resolve_device
+        from ml_D_D.engine.run import _build_torch_model, _resolve_device
         device = _resolve_device("auto")
         model  = _build_torch_model(device)
         model.eval()
@@ -365,7 +409,9 @@ def _run_on_current_sample() -> None:
 
 
 def _sample_and_run() -> None:
-    """Load a new sample and immediately run inference on it."""
+    """
+    Load a new sample and immediately perform inference.
+    """
     _new_sample()
     _run_on_current_sample()
 
@@ -373,17 +419,36 @@ def _sample_and_run() -> None:
 # ── UI helpers ────────────────────────────────────────────
 
 def _clear_results() -> None:
+    """
+    Clear all prediction results from the UI.
+    """
     if dpg.does_item_exist("inf_results"):
         dpg.delete_item("inf_results", children_only=True)
 
 
 def _show_result_text(msg: str, color=(160, 160, 160)) -> None:
+    """
+    Display a text message in the results panel.
+
+    Args:
+        msg (str): Message to display.
+        color (tuple): RGB color.
+    """
     if dpg.does_item_exist("inf_results"):
         dpg.add_text(msg, color=color, parent="inf_results")
 
 
 def _show_result_row(rank: int, class_idx: int, conf: float,
                      is_correct: bool = False) -> None:
+    """
+    Display a prediction row with confidence bar.
+
+    Args:
+        rank (int): Rank position.
+        class_idx (int): Predicted class index.
+        conf (float): Confidence score.
+        is_correct (bool): Whether prediction matches ground truth.
+    """
     if not dpg.does_item_exist("inf_results"):
         return
     pct = conf * 100
@@ -396,6 +461,13 @@ def _show_result_row(rank: int, class_idx: int, conf: float,
 
 
 def _set_status(msg: str, error: bool = False) -> None:
+    """
+    Update the status message displayed in the UI.
+
+    Args:
+        msg (str): Status text.
+        error (bool): If True, display as error (red).
+    """
     if dpg.does_item_exist("inf_status"):
         col = (220, 80, 80) if error else (140, 140, 140)
         dpg.set_value("inf_status", msg)

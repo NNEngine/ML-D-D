@@ -14,6 +14,32 @@ PIPELINE_BAR_H = 24
 
 
 def resize_callback() -> None:
+    """
+    Handle viewport resize events and adjust UI layout dynamically.
+
+    This callback recalculates dimensions for all major UI panels based
+    on the current viewport size, ensuring a responsive layout.
+
+    Layout Adjustments:
+        - Resizes the main window to match the viewport
+        - Updates toolbar and pipeline bar widths
+        - Dynamically computes middle panel height (palette, canvas, training)
+        - Adjusts canvas width based on side panel widths
+        - Resizes console and status bar areas
+
+    Calculation Notes:
+        - Middle height excludes toolbar, console, status bar, menu bar,
+          and pipeline bar heights
+        - Canvas width is derived from total width minus side panels
+        - Small offsets are applied to account for padding/margins
+
+    Assumptions:
+        - All referenced UI items already exist
+        - Constants define fixed dimensions for specific UI regions
+
+    Returns:
+        None
+    """
     vw    = dpg.get_viewport_client_width()
     vh    = dpg.get_viewport_client_height()
     mid_h = vh - CONSOLE_H - TOOLBAR_H - STATUSBAR_H - MENUBAR_H - PIPELINE_BAR_H - 26

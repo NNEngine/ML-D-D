@@ -1,7 +1,11 @@
 """
 tabs.py
-Tab lifecycle management; creation, closure, renaming, and the
-active-tab sync that runs every frame in the render loop.
+
+Tab lifecycle management for the graph editor, including creation,
+closure, renaming, role assignment, and active-tab synchronization.
+
+This module coordinates UI tab elements with application state and
+ensures consistency between DearPyGui and internal tab tracking.
 """
 
 import dearpygui.dearpygui as dpg
@@ -13,16 +17,40 @@ from ml_D_D.ui.console import log
 # Tag helpers
 
 def editor_tag(tid: int) -> str:
+    """
+    Generate the node editor tag for a tab.
+
+    Args:
+        tid (int): Tab ID.
+
+    Returns:
+        str: Editor tag identifier.
+    """
     return f"ne_{tid}"
 
+
 def tab_tag(tid: int) -> str:
+    """
+    Generate the DearPyGui tab tag.
+
+    Args:
+        tid (int): Tab ID.
+
+    Returns:
+        str: Tab tag identifier.
+    """
     return f"tab_{tid}"
 
 
 # Accessors
 
 def current_tab() -> dict | None:
-    """Return the dict for the currently active tab, or None."""
+    """
+    Retrieve the currently active tab state.
+
+    Returns:
+        dict | None: Active tab dictionary, or None if no tab is active.
+    """
     return state.tabs.get(state.active_tab_id)
 
 
@@ -30,9 +58,21 @@ def current_tab() -> dict | None:
 
 def new_tab(name: str | None = None, role: str | None = None) -> int:
     """
-    Create a new tab, add it to the tab bar, and make it active.
-    role: "data_prep" | "model" | "training" | None
-    Returns the new tab id.
+    Create a new tab and initialize its editor and state.
+
+    This function:
+        - Allocates a new tab ID
+        - Initializes tab state (nodes, links, undo stacks)
+        - Creates a DearPyGui tab and node editor
+        - Optionally assigns a pipeline role
+        - Sets the tab as active
+
+    Args:
+        name (str, optional): Display name of the tab.
+        role (str, optional): Pipeline role ("data_prep", "model", "training").
+
+    Returns:
+        int: Newly created tab ID.
     """
     from ml_D_D.graph.links import link_callback, delink_callback
 
@@ -55,14 +95,6 @@ def new_tab(name: str | None = None, role: str | None = None) -> int:
 
     ttag = tab_tag(tid)
     with dpg.tab(label=name, tag=ttag, parent="canvas_tabbar"):
-        # if role:
-        #     from graph.pipeline import ROLES
-        #     col = ROLES[role]["color"]
-        #     with dpg.theme() as tab_theme:
-        #         with dpg.theme_component(dpg.mvTab):
-        #             dpg.add_theme_color(dpg.mvThemeCol_Text, col)
-        #     dpg.bind_item_theme(ttag, tab_theme)
-
         cw_tag = f"canvas_cw_{tid}"
         with dpg.child_window(tag=cw_tag, border=False,
                                no_scrollbar=True, width=-1, height=-1):
@@ -134,11 +166,32 @@ _HINT_LINES = {
 
 
 def _hint_tag(tid: int) -> str:
+    """
+    Generate the tag for a tab's hint node.
+
+    Args:
+        tid (int): Tab ID.
+
+    Returns:
+        str: Hint node tag.
+    """
     return f"hint_node_{tid}"
 
 
 def _add_hint_node(tid: int, role) -> None:
-    """Add a read-only hint node at the centre of the canvas."""
+    """
+    Add an instructional hint node to a tab.
+
+    This node provides guidance based on the tab's role and is displayed
+    when the tab is first created.
+
+    Args:
+        tid (int): Tab ID.
+        role (str | None): Assigned role of the tab.
+
+    Returns:
+        None
+    """
     lines = _HINT_LINES.get(role, _HINT_LINES[None])
     htag  = _hint_tag(tid)
 
@@ -166,16 +219,35 @@ def _add_hint_node(tid: int, role) -> None:
 
 
 def _remove_hint_node(tid: int) -> None:
-    """Delete the hint node if it still exists."""
+    """
+    Remove the hint node from a tab if it exists.
+
+    Args:
+        tid (int): Tab ID.
+
+    Returns:
+        None
+    """
     htag = _hint_tag(tid)
     if dpg.does_item_exist(htag):
         dpg.delete_item(htag)
 
 
 def close_tab(tid: int | None) -> None:
-    """Close tab `tid`, cleaning up all its nodes and DearPyGui items."""
-    from ml_forge.graph.nodes import raw_delete_node
-    from ml_forge.ui.statusbar import refresh_status
+    """
+    Close a tab and clean up all associated resources.
+
+    This includes deleting nodes, removing UI elements, and updating
+    active tab state.
+
+    Args:
+        tid (int | None): Tab ID to close.
+
+    Returns:
+        None
+    """
+    from ml_D_D.graph.nodes import raw_delete_node
+    from ml_D_D.ui.statusbar import refresh_status
 
     if tid is None or tid not in state.tabs:
         return
@@ -199,11 +271,19 @@ def close_tab(tid: int | None) -> None:
 
 def assign_role(tid: int, role: str | None) -> None:
     """
-    Assign or clear the pipeline role for tab `tid`.
-    Updates the tab header colour and refreshes the pipeline bar.
+    Assign or clear a pipeline role for a tab.
+
+    Updates visual styling and triggers pipeline status refresh.
+
+    Args:
+        tid (int): Tab ID.
+        role (str | None): Role to assign.
+
+    Returns:
+        None
     """
-    from ml_forge.graph.pipeline import ROLES, refresh_pipeline_bar
-    import ml_forge.graph.pipeline as _pipeline
+    from ml_D_D.graph.pipeline import ROLES, refresh_pipeline_bar
+    import ml_D_D.graph.pipeline as _pipeline
 
     if tid not in state.tabs:
         return
@@ -230,8 +310,13 @@ def assign_role(tid: int, role: str | None) -> None:
 
 
 def open_assign_role_dialog() -> None:
-    """Show a popup to assign a pipeline role to the active tab."""
-    from ml_forge.graph.pipeline import ROLES, ROLE_ORDER
+    """
+    Open a dialog for assigning roles to the active tab.
+
+    Returns:
+        None
+    """
+    from ml_D_D.graph.pipeline import ROLES, ROLE_ORDER
 
     tid = state.active_tab_id
     if tid is None or tid not in state.tabs:
@@ -283,9 +368,17 @@ def open_assign_role_dialog() -> None:
                                         if dpg.does_item_exist(tag) else None)
 
 
-
 def rename_tab(tid: int, new_name: str) -> None:
-    """Rename a tab both in state and in the DearPyGui label."""
+    """
+    Rename a tab in both state and UI.
+
+    Args:
+        tid (int): Tab ID.
+        new_name (str): New tab name.
+
+    Returns:
+        None
+    """
     if tid not in state.tabs:
         return
     state.tabs[tid]["name"] = new_name
@@ -296,12 +389,13 @@ def rename_tab(tid: int, new_name: str) -> None:
 
 def sync_active_tab() -> None:
     """
-    Poll the tab bar every frame to keep state.active_tab_id in sync
-    with whichever tab the user has clicked on.
+    Synchronize the active tab state with the UI selection.
 
-    dpg.get_value() on a tab_bar returns the internal integer ID of the
-    selected tab item - so we resolve each tab's tag to its item ID
-    via dpg.get_alias_id() before comparing.
+    This function is called every frame to ensure consistency between
+    DearPyGui's tab selection and application state.
+
+    Returns:
+        None
     """
     from ml_D_D.ui.statusbar import refresh_status
 
@@ -319,12 +413,18 @@ def sync_active_tab() -> None:
                 break
 
 
-# Tab bar change callback
+# Tab change callback
 
 def on_tab_change(sender, app_data) -> None:
     """
-    DearPyGui callback - fires when user clicks a tab.
-    app_data is the integer item ID of the newly selected tab.
+    Handle tab selection changes from the UI.
+
+    Args:
+        sender: UI element triggering the callback.
+        app_data: Selected tab item ID.
+
+    Returns:
+        None
     """
     from ml_D_D.ui.statusbar import refresh_status
 

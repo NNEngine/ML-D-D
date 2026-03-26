@@ -1,12 +1,16 @@
 """
 engine/autofill.py
-Auto-fill and shape inference for the node editor.
 
-Features:
-  Dataset -> Input/Output shape inference
-  Channel / feature propagation (Linear, Conv2D)
-  Flatten -> Linear in_features calculation
-  Inline dimension mismatch warnings
+Automatic parameter filling and shape inference system for the node editor.
+
+This module provides:
+    - Dataset-driven input/output shape inference
+    - Feature/channel propagation across layers
+    - Shape simulation through the model graph
+    - Automatic parameter filling (e.g., in_features, in_channels)
+    - Detection and highlighting of dimension mismatches
+
+It acts as a lightweight static analysis engine for the visual model graph.
 """
 
 from __future__ import annotations
@@ -38,16 +42,46 @@ _IN_PARAM: dict[str, str] = {
 
 
 def _field(ntag: str, param: str) -> str:
+    """
+    Construct the DearPyGui tag for a node parameter input field.
+
+    Args:
+        ntag (str): Node tag identifier.
+        param (str): Parameter name.
+
+    Returns:
+        str: Fully qualified input field tag.
+    """
     parts = ntag.split("_")
     return f"node_{parts[1]}_{parts[2]}_input_{param}"
 
 
 def _get_field(ntag: str, param: str) -> str:
+    """
+    Retrieve the current value of a node parameter field.
+
+    Args:
+        ntag (str): Node tag identifier.
+        param (str): Parameter name.
+
+    Returns:
+        str: Parameter value (trimmed), or empty string if not found.
+    """
     tag = _field(ntag, param)
     return dpg.get_value(tag).strip() if dpg.does_item_exist(tag) else ""
 
 
 def _set_field(ntag: str, param: str, value: str) -> None:
+    """
+    Set a parameter field value only if it is currently empty.
+
+    This preserves user input while allowing automatic inference.
+
+    Args:
+        ntag (str): Node tag identifier.
+        param (str): Parameter name.
+        value (str): Value to assign.
+    """
     tag = _field(ntag, param)
     if dpg.does_item_exist(tag):
         current = dpg.get_value(tag).strip()
@@ -56,17 +90,44 @@ def _set_field(ntag: str, param: str, value: str) -> None:
 
 
 def _set_field_force(ntag: str, param: str, value: str) -> None:
+    """
+    Forcefully overwrite a parameter field value.
+
+    Args:
+        ntag (str): Node tag identifier.
+        param (str): Parameter name.
+        value (str): Value to assign.
+    """
     tag = _field(ntag, param)
     if dpg.does_item_exist(tag):
         dpg.set_value(tag, value)
 
 
 def _block_label(tab: dict, ntag: str) -> str:
+    """
+    Retrieve the display label of a node.
+
+    Args:
+        tab (dict): Tab state containing nodes.
+        ntag (str): Node tag identifier.
+
+    Returns:
+        str: Node label.
+    """
     ni = tab["nodes"].get(ntag, {})
     return ni["label"] if isinstance(ni, dict) else ni
 
 
 def _get_tab_by_role(role: str) -> dict | None:
+    """
+    Retrieve a tab configuration by its assigned role.
+
+    Args:
+        role (str): Role identifier (e.g., "model", "data_prep").
+
+    Returns:
+        dict | None: Matching tab dictionary if found, otherwise None.
+    """
     for t in state.tabs.values():
         if t.get("role") == role:
             return t
@@ -74,35 +135,42 @@ def _get_tab_by_role(role: str) -> dict | None:
 
 
 def _safe_int(v, default=0) -> int:
+    """
+    Safely convert a value to an integer.
+
+    Args:
+        v (Any): Value to convert.
+        default (int, optional): Fallback value if conversion fails.
+
+    Returns:
+        int: Parsed integer or default value.
+    """
     try:
         return int(str(v).strip())
     except Exception:
         return default
 
 
-# ── Shape simulation ──────────────────────────────────────
-
 def _simulate_shapes(tab: dict) -> dict[str, tuple | None]:
     """
-    Walk the model graph in topological order and track the output
-    shape of each node as a tuple:
-      conv layers: (C, H, W)
-      linear layers: (features,)
-      after flatten: (features,)
-      unknown: None
+    Simulate forward shape propagation through the model graph.
 
-    Returns dict[ntag -> shape_tuple | None]
+    Args:
+        tab (dict): Model tab state.
+
+    Returns:
+        dict[str, tuple | None]: Mapping of node tag → inferred output shape.
     """
     try:
-        from ml_forge.engine.graph import topological_sort
+        from ml_D_D.engine.graph import topological_sort
         ordered = topological_sort(tab)
     except Exception:
         return {}
 
     shapes: dict[str, tuple | None] = {}
 
-    # Find the Input node shape to seed the simulation
     def _input_shape() -> tuple | None:
+        """Extract input shape from the Input node."""
         for node in ordered:
             if node.block_label == "Input":
                 raw = _get_field(node.ntag, "shape").replace(" ", "")
@@ -113,8 +181,8 @@ def _simulate_shapes(tab: dict) -> dict[str, tuple | None]:
                     return (_safe_int(parts[0]),)
         return None
 
-    # find the shape of the single upstream node
     def _upstream_shape(ntag: str) -> tuple | None:
+        """Retrieve shape from upstream connected node."""
         for _, (a1, a2) in tab["links"].items():
             sp = a1.split("_"); dp = a2.split("_")
             if len(sp) >= 3 and len(dp) >= 3:
@@ -137,7 +205,6 @@ def _simulate_shapes(tab: dict) -> dict[str, tuple | None]:
         if label in ("ReLU", "Sigmoid", "Tanh", "GELU", "LeakyReLU",
                      "Softmax", "Dropout", "BatchNorm2D", "LayerNorm",
                      "GroupNorm", "Output"):
-            # Pass-through - same shape as input
             shapes[node.ntag] = up
             continue
 
@@ -157,10 +224,10 @@ def _simulate_shapes(tab: dict) -> dict[str, tuple | None]:
             continue
 
         if label in ("Conv2D", "ConvTranspose2D"):
-            out_c  = _safe_int(_get_field(node.ntag, "out_channels"))
-            k      = _safe_int(_get_field(node.ntag, "kernel_size"), 3)
-            s      = _safe_int(_get_field(node.ntag, "stride"), 1) or 1
-            p      = _safe_int(_get_field(node.ntag, "padding"), 0)
+            out_c = _safe_int(_get_field(node.ntag, "out_channels"))
+            k = _safe_int(_get_field(node.ntag, "kernel_size"), 3)
+            s = _safe_int(_get_field(node.ntag, "stride"), 1) or 1
+            p = _safe_int(_get_field(node.ntag, "padding"), 0)
             if up and len(up) == 3 and out_c > 0:
                 _, h, w = up
                 if label == "Conv2D":
@@ -199,14 +266,15 @@ def _simulate_shapes(tab: dict) -> dict[str, tuple | None]:
                 shapes[node.ntag] = up
             continue
 
-        shapes[node.ntag] = up  # unknown — pass through
+        shapes[node.ntag] = up
 
     return shapes
 
 
-# Dataset -> Input / Output shape
-
 def infer_from_dataset() -> None:
+    """
+    Infer and populate model input/output shapes from selected dataset.
+    """
     data_tab  = _get_tab_by_role("data_prep")
     model_tab = _get_tab_by_role("model")
     if not data_tab or not model_tab:
@@ -236,13 +304,9 @@ def infer_from_dataset() -> None:
                 _set_field(ntag, "shape", str(num_classes))
 
 
-# Propagation including Flatten
-
 def propagate_all(tab: dict) -> None:
     """
-    Walk the model graph and:
-    Propagate out_channels/out_features to downstream in_channels/in_features
-    Calculate Flatten output size and fill the next Linear's in_features
+    Perform full parameter propagation across the model graph.
     """
     if not tab:
         return
@@ -250,7 +314,7 @@ def propagate_all(tab: dict) -> None:
     shapes = _simulate_shapes(tab)
 
     try:
-        from ml_forge.engine.graph import topological_sort
+        from ml_D_D.engine.graph import topological_sort
         ordered = topological_sort(tab)
     except Exception:
         return
@@ -258,7 +322,6 @@ def propagate_all(tab: dict) -> None:
     for node in ordered:
         label = node.block_label
 
-        # Standard channel/feature propagation
         out_param = _OUT_PARAM.get(label)
         if out_param:
             out_val = _get_field(node.ntag, out_param)
@@ -274,7 +337,6 @@ def propagate_all(tab: dict) -> None:
                             if in_param:
                                 _set_field(dst, in_param, out_val)
 
-        # Flatten -> next Linear in_features
         if label == "Flatten":
             flat_shape = shapes.get(node.ntag)
             if flat_shape and len(flat_shape) == 1 and flat_shape[0] > 0:
@@ -291,16 +353,19 @@ def propagate_all(tab: dict) -> None:
 
 
 def propagate_from_link(tab: dict, src_ntag: str, dst_ntag: str) -> None:
-    """Quick propagation on a single new link."""
+    """
+    Trigger parameter propagation after a new link is created.
+    """
     propagate_all(tab)
 
-
-# Dimension mismatch warnings
 
 _mismatch_themes: dict[str, int] = {}
 
 
 def check_dimension_mismatches(tab: dict) -> None:
+    """
+    Detect and visually highlight dimension mismatches between connected nodes.
+    """
     global _mismatch_themes
     if not tab:
         return
@@ -326,7 +391,6 @@ def check_dimension_mismatches(tab: dict) -> None:
         src_label = _block_label(tab, src_n)
         dst_label = _block_label(tab, dst_n)
 
-        # Standard param mismatch
         out_param = _OUT_PARAM.get(src_label)
         in_param  = _IN_PARAM.get(dst_label)
         if out_param and in_param:
@@ -335,7 +399,6 @@ def check_dimension_mismatches(tab: dict) -> None:
             if out_val and in_val and out_val != in_val:
                 mismatched.add(dst_n)
 
-        # Flatten -> Linear mismatch
         if src_label == "Flatten" and dst_label == "Linear":
             flat_shape = shapes.get(src_n)
             if flat_shape and len(flat_shape) == 1 and flat_shape[0] > 0:
@@ -349,21 +412,18 @@ def check_dimension_mismatches(tab: dict) -> None:
             continue
         with dpg.theme() as th:
             with dpg.theme_component(dpg.mvNode):
-                dpg.add_theme_color(dpg.mvNodeCol_NodeOutline,
-                                    (220, 120, 40), category=dpg.mvThemeCat_Nodes)
-                dpg.add_theme_color(dpg.mvNodeCol_TitleBar,
-                                    (120, 60, 20), category=dpg.mvThemeCat_Nodes)
-                dpg.add_theme_color(dpg.mvNodeCol_TitleBarHovered,
-                                    (150, 80, 30), category=dpg.mvThemeCat_Nodes)
-                dpg.add_theme_color(dpg.mvNodeCol_TitleBarSelected,
-                                    (180, 100, 40), category=dpg.mvThemeCat_Nodes)
+                dpg.add_theme_color(dpg.mvNodeCol_NodeOutline, (220, 120, 40), category=dpg.mvThemeCat_Nodes)
+                dpg.add_theme_color(dpg.mvNodeCol_TitleBar, (120, 60, 20), category=dpg.mvThemeCat_Nodes)
+                dpg.add_theme_color(dpg.mvNodeCol_TitleBarHovered, (150, 80, 30), category=dpg.mvThemeCat_Nodes)
+                dpg.add_theme_color(dpg.mvNodeCol_TitleBarSelected, (180, 100, 40), category=dpg.mvThemeCat_Nodes)
         dpg.bind_item_theme(ntag, th)
         _mismatch_themes[ntag] = th
 
 
-# Public entry points
-
 def on_link_made(tab: dict, src_ntag: str, dst_ntag: str) -> None:
+    """
+    Handle logic triggered when a new link is created in the graph.
+    """
     if tab.get("role") != "model":
         return
     propagate_from_link(tab, src_ntag, dst_ntag)
@@ -371,6 +431,9 @@ def on_link_made(tab: dict, src_ntag: str, dst_ntag: str) -> None:
 
 
 def on_param_changed(tab: dict) -> None:
+    """
+    Handle updates when node parameters are modified.
+    """
     if tab.get("role") != "model":
         return
     propagate_all(tab)
@@ -378,6 +441,9 @@ def on_param_changed(tab: dict) -> None:
 
 
 def on_node_spawned(tab: dict) -> None:
+    """
+    Handle initialization logic when a new node is added.
+    """
     infer_from_dataset()
     if tab.get("role") == "model":
         propagate_all(tab)
@@ -385,4 +451,7 @@ def on_node_spawned(tab: dict) -> None:
 
 
 def on_dataset_changed() -> None:
+    """
+    Handle updates when the dataset selection changes.
+    """
     infer_from_dataset()

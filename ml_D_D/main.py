@@ -27,6 +27,19 @@ from ml_D_D.ui.resize  import resize_callback
 #  Splash helpers
 
 def _build_splash(vw: int, vh: int) -> None:
+    """
+    Create and display the splash screen window.
+
+    The splash screen is centered within the viewport and contains
+    a title, status text, progress bar, and step indicator.
+
+    Args:
+        vw (int): Viewport width.
+        vh (int): Viewport height.
+
+    Returns:
+        None
+    """
     sw, sh = 340, 160
     sx = (vw - sw) // 2
     sy = (vh - sh) // 2
@@ -53,6 +66,19 @@ def _build_splash(vw: int, vh: int) -> None:
 
 
 def _splash_step(label: str, progress: float) -> None:
+    """
+    Update the splash screen with a new status label and progress value.
+
+    This function animates the progress bar smoothly from its current
+    value to the target value.
+
+    Args:
+        label (str): Status message to display.
+        progress (float): Target progress value (0.0 to 1.0).
+
+    Returns:
+        None
+    """
     if dpg.does_item_exist("splash_status"):
         dpg.set_value("splash_status", label)
     if dpg.does_item_exist("splash_progress"):
@@ -71,6 +97,12 @@ def _splash_step(label: str, progress: float) -> None:
 
 
 def _close_splash() -> None:
+    """
+    Remove the splash screen from the UI if it exists.
+
+    Returns:
+        None
+    """
     if dpg.does_item_exist("splash"):
         dpg.delete_item("splash")
 
@@ -78,6 +110,23 @@ def _close_splash() -> None:
 #  Main
 
 def main() -> None:
+    """
+    Entry point for the ML D&D application.
+
+    This function:
+    - Initializes DearPyGui context and viewport
+    - Displays and updates a splash screen during setup
+    - Builds UI components and tabs
+    - Initializes application state
+    - Runs the main render loop
+
+    The render loop handles user input, updates UI components,
+    and executes periodic tasks such as training updates and
+    pipeline synchronization.
+
+    Returns:
+        None
+    """
     dpg.create_context()
     dpg.create_viewport(title="ML D&D", width=1380, height=820,
                         resizable=True)

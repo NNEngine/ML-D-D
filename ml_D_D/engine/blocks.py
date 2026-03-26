@@ -1,9 +1,23 @@
 """
 blocks.py
-Block (node type) definitions and lookup helpers.
+
+Central registry and lookup utilities for all block (node) definitions
+used in the graph editor.
+
+This module defines:
+    - The hierarchical block registry (SECTIONS)
+    - Metadata for each block (params, inputs, outputs, color)
+    - Helper functions for retrieving block definitions
+
+The registry drives:
+    - UI palette generation
+    - Node creation
+    - Parameter handling
+    - Pipeline validation
 """
 
 from typing import Optional
+
 
 # Block registry
 # Structure:
@@ -12,9 +26,9 @@ from typing import Optional
 # block_def keys:
 #   label   : str           - display name and unique identifier
 #   color   : (r, g, b)     - title bar / text accent colour
-#   params  : [str]         - editable parameter field names
-#   inputs  : [str]         - input pin names
-#   outputs : [str]         - output pin names
+#   params  : list[str]     - editable parameter field names
+#   inputs  : list[str]     - input pin names
+#   outputs : list[str]     - output pin names
 
 SECTIONS: dict = {
     "Model Creation": {
@@ -102,7 +116,23 @@ SECTIONS: dict = {
 
 
 def get_block_def(label: str) -> Optional[dict]:
-    """Return the block definition dict for a given label, or None."""
+    """
+    Retrieve a block definition by its label.
+
+    Performs a full traversal of the block registry to locate
+    the matching block definition.
+
+    Args:
+        label (str): Unique label identifying the block.
+
+    Returns:
+        Optional[dict]:
+            The block definition dictionary if found, otherwise None.
+
+    Notes:
+        - This is a linear search; consider caching if performance
+          becomes critical with a large number of blocks.
+    """
     for section in SECTIONS.values():
         for block_list in section.values():
             for block in block_list:
@@ -112,7 +142,20 @@ def get_block_def(label: str) -> Optional[dict]:
 
 
 def all_block_labels() -> list[str]:
-    """Return a flat list of every block label across all sections."""
+    """
+    Retrieve a flat list of all available block labels.
+
+    This function traverses the entire block registry and collects
+    the label of every defined block.
+
+    Returns:
+        list[str]: List of all block labels.
+
+    Use Cases:
+        - Validation (ensuring a label exists)
+        - Autocomplete / search features
+        - Debugging and introspection
+    """
     labels = []
     for section in SECTIONS.values():
         for block_list in section.values():

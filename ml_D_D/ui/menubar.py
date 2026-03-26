@@ -1,7 +1,10 @@
 """
 ui/menubar.py
-Builds the DearPyGui viewport menu bar.
-All callbacks are imported from their respective logic modules.
+
+Builds the DearPyGui viewport menu bar and wires UI actions to their
+respective application logic. This module is responsible for constructing
+menus, toolbar-style controls, and auxiliary dialogs such as documentation
+and about windows.
 """
 
 import dearpygui.dearpygui as dpg
@@ -9,6 +12,26 @@ import ml_D_D.state as state
 
 
 def build_menubar() -> None:
+    """
+    Construct and render the main viewport menu bar.
+
+    This function defines the complete top-level menu structure, including:
+        - File operations (open, save, templates, export)
+        - Edit actions (undo, redo, delete, clear canvas)
+        - Graph management (tab operations, role assignment)
+        - Run utilities (inference)
+        - Help dialogs (documentation, about)
+        - Training controls (Run, Pause, Stop)
+        - Runtime indicators (VRAM and CUDA status)
+
+    Behavior:
+        - Imports callbacks lazily to avoid circular dependencies
+        - Binds UI actions directly to application logic functions
+        - Creates persistent UI elements with fixed tags for later updates
+
+    Returns:
+        None
+    """
     from ml_D_D.graph.nodes       import delete_selected_nodes, clear_canvas
     from ml_D_D.graph.tabs        import new_tab, close_tab, open_assign_role_dialog
     from ml_D_D.graph.undo        import undo, redo
@@ -93,7 +116,21 @@ def build_menubar() -> None:
 
 
 def _load_template(filename: str) -> None:
-    """Load a bundled template without overwriting state.current_file."""
+    """
+    Load a bundled project template without modifying the current file path.
+
+    This function:
+        - Resolves the template path relative to the application directory
+        - Loads the project into the current state
+        - Clears ``state.current_file`` to avoid overwriting the template
+        - Refreshes UI status indicators
+
+    Args:
+        filename (str): Template file name to load.
+
+    Returns:
+        None
+    """
     import pathlib
     from ml_D_D.filesystem.save import load_project
     from ml_D_D.ui.console import log
@@ -114,6 +151,17 @@ def _load_template(filename: str) -> None:
 
 
 def _open_docs() -> None:
+    """
+    Open the documentation window.
+
+    Creates a centered modal-style window containing usage guidance,
+    shortcuts, and workflow instructions for the application.
+
+    If the window already exists, it is recreated to ensure fresh content.
+
+    Returns:
+        None
+    """
     tag = "docs_window"
     if dpg.does_item_exist(tag):
         dpg.delete_item(tag)
@@ -187,6 +235,17 @@ def _open_docs() -> None:
 
 
 def _open_about() -> None:
+    """
+    Open the About dialog window.
+
+    Displays application information including version, description,
+    dependencies, and available templates.
+
+    If the window already exists, it is recreated to ensure a clean state.
+
+    Returns:
+        None
+    """
     tag = "about_window"
     if dpg.does_item_exist(tag):
         dpg.delete_item(tag)

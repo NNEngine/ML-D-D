@@ -10,8 +10,22 @@ from ml_D_D.graph.nodes   import input_field_tag
 
 
 def _safe_int(v) -> int:
-    try:    return int(v)
-    except: return 0
+    """
+    Safely convert a value to an integer.
+
+    Attempts to cast the input to ``int`` and returns ``0`` if the
+    conversion fails (e.g., invalid type or value).
+
+    Args:
+        v: Value to convert.
+
+    Returns:
+        int: Converted integer value, or 0 on failure.
+    """
+    try:
+        return int(v)
+    except Exception:
+        return 0
 
 
 PARAM_ESTIMATES: dict = {
@@ -25,6 +39,28 @@ PARAM_ESTIMATES: dict = {
 
 
 def refresh_model_summary() -> None:
+    """
+    Recompute and render the model summary in the UI panel.
+
+    This function:
+        - Clears the existing summary content
+        - Iterates over nodes in the current tab
+        - Estimates parameter counts per layer using ``PARAM_ESTIMATES``
+        - Displays a formatted table of layers and parameter counts
+        - Computes and displays total parameters and estimated memory
+
+    Estimation Notes:
+        - Only layers present in ``PARAM_ESTIMATES`` contribute to counts
+        - Memory estimate assumes 32-bit floats (fp32, 4 bytes per param)
+
+    UI Behavior:
+        - Gracefully handles empty canvases
+        - Uses subdued colors for non-param layers
+        - Highlights totals and memory usage
+
+    Returns:
+        None
+    """
     import ml_D_D.state as state
     from ml_D_D.graph.tabs import current_tab
 

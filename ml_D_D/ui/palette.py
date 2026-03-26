@@ -11,11 +11,51 @@ from ml_D_D.constants import SECTION_COLORS
 
 
 def on_search(sender, app_data) -> None:
+    """
+    Handle search input changes for the block palette.
+
+    Updates the global search query state and triggers a rebuild
+    of the palette to reflect filtered results.
+
+    Args:
+        sender: The UI element that triggered the callback.
+        app_data: The current search input string.
+
+    Returns:
+        None
+    """
     state.search_state["query"] = app_data.lower()
     rebuild_palette()
 
 
 def rebuild_palette() -> None:
+    """
+    Rebuild the block palette UI based on the current search query.
+
+    This function:
+        - Clears existing palette content
+        - Filters available blocks using the search query
+        - Organizes blocks by section and category
+        - Dynamically creates UI elements (headers, buttons)
+        - Applies visual theming for sections and block buttons
+
+    Behavior:
+        - Only sections with matching blocks are displayed
+        - Categories without matches are skipped
+        - Each block button spawns a node when clicked
+
+    UI Structure:
+        Section (collapsing header)
+            └── Category label
+                └── Block buttons
+
+    Notes:
+        - Uses lambda callbacks with user_data to pass block labels
+        - Ensures UI elements are recreated cleanly to avoid duplicates
+
+    Returns:
+        None
+    """
     from ml_D_D.graph.nodes import spawn_node
 
     query = state.search_state["query"]

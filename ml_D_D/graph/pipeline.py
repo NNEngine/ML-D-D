@@ -1,6 +1,11 @@
 """
 graph/pipeline.py
-Pipeline stage definitions and completion detection.
+
+Defines pipeline stages, their roles, and utilities for determining
+pipeline completeness and readiness for training.
+
+This module evaluates whether each stage (Data Prep, Model, Training)
+is properly configured and provides status summaries for UI display.
 """
 
 import dearpygui.dearpygui as dpg
@@ -17,6 +22,19 @@ ROLE_ORDER = ["data_prep", "model", "training"]
 
 
 def _tab_complete(t: dict) -> bool:
+    """
+    Determine whether a pipeline tab is fully configured.
+
+    A tab is considered complete if:
+        - It contains at least one node
+        - All nodes with parameters have at least one parameter filled
+
+    Args:
+        t (dict): Tab state dictionary containing nodes and metadata.
+
+    Returns:
+        bool: True if the tab is complete, False otherwise.
+    """
     if not t["nodes"]:
         return False
     for ntag, node_info in t["nodes"].items():
@@ -38,6 +56,19 @@ def _tab_complete(t: dict) -> bool:
 
 
 def get_stage_statuses() -> list[dict]:
+    """
+    Compute the status of each pipeline stage.
+
+    Each stage is categorized as one of:
+        - "unassigned": No tab assigned to the role
+        - "empty": Tab exists but contains no nodes
+        - "partial": Tab has nodes but is incomplete
+        - "complete": Tab is fully configured
+
+    Returns:
+        list[dict]: List of stage status dictionaries containing
+                    role, label, color, and status.
+    """
     role_tab: dict[str, dict | None] = {r: None for r in ROLE_ORDER}
     for t in state.tabs.values():
         role = t.get("role")
@@ -61,6 +92,12 @@ def get_stage_statuses() -> list[dict]:
 
 
 def pipeline_ready() -> bool:
+    """
+    Check whether the entire pipeline is ready for training.
+
+    Returns:
+        bool: True if all pipeline stages are complete.
+    """
     return all(s["status"] == "complete" for s in get_stage_statuses())
 
 
@@ -68,6 +105,21 @@ _last_pipeline_state = None
 
 
 def refresh_pipeline_bar() -> None:
+    """
+    Update the pipeline status bar UI.
+
+    Displays a summary message indicating whether the pipeline is:
+        - Incomplete (missing stages)
+        - Contains validation errors
+        - Contains warnings
+        - Fully ready for training
+
+    Optimizations:
+        - Avoids redundant UI updates by caching the last state
+
+    Returns:
+        None
+    """
     global _last_pipeline_state
 
     if not dpg.does_item_exist("pipeline_bar_content"):
@@ -79,7 +131,7 @@ def refresh_pipeline_bar() -> None:
     errors = warnings = 0
     if not any_empty:
         try:
-            from ml_forge.engine.graph import validate_pipeline
+            from ml_D_D.engine.graph import validate_pipeline
             result   = validate_pipeline()
             errors   = len(result.errors)
             warnings = len(result.warnings)

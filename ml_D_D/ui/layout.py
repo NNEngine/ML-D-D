@@ -1,11 +1,15 @@
 """
 ui/layout.py
-Builds the main DearPyGui window and all child panels:
-  - Block palette (left)
-  - Canvas tab bar (centre)
-  - Training config + plots (right)
-  - Console log (bottom)
-  - Status bar (bottom edge)
+
+Builds the main DearPyGui window and all child panels, including:
+    - Block palette (left)
+    - Canvas tab bar (centre)
+    - Training configuration and plots (right)
+    - Console log (bottom)
+    - Status bar (bottom edge)
+
+This module defines the overall UI layout and structural composition
+of the application.
 """
 
 import math
@@ -23,7 +27,7 @@ PIPELINE_BAR_H = 24
 
 # Default plot values
 
-_demo_e    = list(range(1, 21))
+_demo_e     = list(range(1, 21))
 _demo_tloss = [2.3 * math.exp(-0.18 * e) + 0.05 for e in _demo_e]
 _demo_vloss = [2.5 * math.exp(-0.15 * e) + 0.08 for e in _demo_e]
 _demo_tacc  = [1 - math.exp(-0.22 * e) * 0.95   for e in _demo_e]
@@ -31,6 +35,24 @@ _demo_vacc  = [1 - math.exp(-0.18 * e) * 0.97   for e in _demo_e]
 
 
 def build_main_window() -> None:
+    """
+    Construct the main application window and its layout structure.
+
+    This function initializes the root DearPyGui window and composes
+    all major UI sections in vertical order:
+        - Toolbar
+        - Pipeline bar
+        - Main content row (palette, canvas, training panel)
+        - Console panel
+        - Status bar
+
+    Behavior:
+        - Disables window decorations (title bar, resize, move)
+        - Delegates section construction to helper builder functions
+
+    Returns:
+        None
+    """
     from ml_D_D.ui.toolbar import build_toolbar
 
     with dpg.window(tag="main_window", no_title_bar=True, no_move=True,
@@ -48,11 +70,31 @@ def build_main_window() -> None:
 
 
 def _build_toolbar_placeholder() -> None:
-    """Toolbar is built separately by ui/toolbar.py — this is a no-op hook."""
-    pass  # toolbar.build_toolbar() is called before build_main_window()
+    """
+    Placeholder for toolbar integration.
+
+    The actual toolbar is constructed externally via
+    ``ui.toolbar.build_toolbar``. This function exists as a hook for
+    layout consistency and potential future extension.
+
+    Returns:
+        None
+    """
+    pass
 
 
 def _build_middle_row() -> None:
+    """
+    Build the main horizontal layout row.
+
+    This row contains the three primary panels:
+        - Block palette (left)
+        - Canvas workspace (center)
+        - Training configuration panel (right)
+
+    Returns:
+        None
+    """
     with dpg.group(horizontal=True, tag="top_row"):
         _build_palette_panel()
         _build_canvas_panel()
@@ -62,15 +104,34 @@ def _build_middle_row() -> None:
 # Pipeline bar
 
 def _build_pipeline_bar() -> None:
+    """
+    Build the pipeline tab bar container.
+
+    This container holds dynamically injected pipeline tabs,
+    typically created via the graph tab management system.
+
+    Returns:
+        None
+    """
     with dpg.child_window(tag="pipeline_bar", height=PIPELINE_BAR_H,
                            border=False, no_scrollbar=True):
         with dpg.group(horizontal=True, tag="pipeline_bar_content"):
-            pass # Pipeline tabs injected by graph.tabs.new_tab() before first render
+            pass
 
 
 # Palette
 
 def _build_palette_panel() -> None:
+    """
+    Build the block palette panel.
+
+    This panel provides:
+        - A searchable list of available blocks
+        - Categorized sections for block organization
+
+    Returns:
+        None
+    """
     with dpg.child_window(tag="palette_panel", width=PALETTE_W,
                            border=True, no_scrollbar=False):
         dpg.add_text("Blocks", color=(200, 200, 200))
@@ -86,23 +147,44 @@ def _build_palette_panel() -> None:
 # Canvas
 
 def _build_canvas_panel() -> None:
+    """
+    Build the central canvas panel for graph editing.
+
+    Contains a tab bar where each tab represents a separate
+    pipeline workspace.
+
+    Returns:
+        None
+    """
     with dpg.child_window(tag="canvas_panel", border=True, no_scrollbar=True, width=-1, height=-1):
         with dpg.tab_bar(tag="canvas_tabbar",
                          callback=on_tab_change,
                          reorderable=True):
-            pass # tabs injected by graph.tabs.new_tab() before first render
+            pass
 
 
 # Training config
 
 def _build_train_panel() -> None:
+    """
+    Build the training configuration panel.
+
+    This panel includes:
+        - Training parameters (epochs, validation split, seed)
+        - Device selection and AMP settings
+        - Checkpointing and early stopping configuration
+        - Model summary section
+        - Loss and accuracy plots
+
+    Returns:
+        None
+    """
     with dpg.child_window(tag="train_panel", width=TRAIN_W,
                            border=True, no_scrollbar=False):
         dpg.add_text("Training Config", color=(100, 200, 255))
         dpg.add_separator()
         dpg.add_spacer(height=4)
 
-        # Progress bar
         dpg.add_text("Progress", color=(140, 140, 140))
         dpg.add_progress_bar(tag="train_progress", default_value=0.0,
                              width=-1, overlay="Idle")
@@ -120,6 +202,15 @@ def _build_train_panel() -> None:
 
 
 def _build_general_section() -> None:
+    """
+    Build the general training configuration section.
+
+    Includes epoch count, validation split, random seed,
+    and shuffle settings.
+
+    Returns:
+        None
+    """
     with dpg.collapsing_header(label="General", default_open=True):
         dpg.add_input_int(label="Epochs",    tag="cfg_epochs",
                           default_value=20,  width=110, min_value=1)
@@ -138,6 +229,14 @@ def _build_general_section() -> None:
 
 
 def _build_device_section() -> None:
+    """
+    Build the device configuration section.
+
+    Allows selection of compute device and optional AMP usage.
+
+    Returns:
+        None
+    """
     with dpg.collapsing_header(label="Device", default_open=True):
         dpg.add_combo(label="Device", tag="cfg_device",
                       items=["auto", "cuda", "cpu", "mps"],
@@ -148,6 +247,14 @@ def _build_device_section() -> None:
 
 
 def _build_checkpoint_section() -> None:
+    """
+    Build the checkpointing configuration section.
+
+    Provides controls for saving model checkpoints during training.
+
+    Returns:
+        None
+    """
     with dpg.collapsing_header(label="Checkpointing", default_open=False):
         dpg.add_input_text(label="Save Dir",    tag="cfg_ckpt_dir",
                            default_value="./checkpoints", width=150)
@@ -162,6 +269,15 @@ def _build_checkpoint_section() -> None:
 
 
 def _build_earlystop_section() -> None:
+    """
+    Build the early stopping configuration section.
+
+    Allows configuration of early stopping criteria based on
+    monitored metrics.
+
+    Returns:
+        None
+    """
     with dpg.collapsing_header(label="Early Stopping", default_open=False):
         dpg.add_checkbox(label="Enable",    tag="cfg_es_enable",
                          default_value=False)
@@ -173,6 +289,15 @@ def _build_earlystop_section() -> None:
 
 
 def _build_summary_section() -> None:
+    """
+    Build the model summary section.
+
+    Displays parameter counts and model statistics, with an option
+    to refresh the summary dynamically.
+
+    Returns:
+        None
+    """
     with dpg.collapsing_header(label="Model Summary", default_open=True):
         dpg.add_button(label="Refresh", small=True,
                        callback=refresh_model_summary)
@@ -185,6 +310,15 @@ def _build_summary_section() -> None:
 
 
 def _build_loss_plot() -> None:
+    """
+    Build the training loss visualization plot.
+
+    Includes training, validation, and batch loss series with
+    optional smoothing control.
+
+    Returns:
+        None
+    """
     with dpg.collapsing_header(label="Loss Curve", default_open=True):
         with dpg.group(horizontal=True):
             dpg.add_text("Batch smooth:", color=(140, 140, 140))
@@ -208,6 +342,14 @@ def _build_loss_plot() -> None:
 
 
 def _build_acc_plot() -> None:
+    """
+    Build the training accuracy visualization plot.
+
+    Displays training and validation accuracy trends over epochs.
+
+    Returns:
+        None
+    """
     with dpg.collapsing_header(label="Accuracy Curve", default_open=True):
         with dpg.plot(height=155, width=-1, tag="acc_plot", no_title=True):
             dpg.add_plot_legend()
@@ -224,6 +366,15 @@ def _build_acc_plot() -> None:
 # Console
 
 def _build_console() -> None:
+    """
+    Build the console output panel.
+
+    Provides a scrolling log view with severity indicators and
+    a clear button to reset console output.
+
+    Returns:
+        None
+    """
     with dpg.child_window(tag="console_window", border=True,
                            no_scrollbar=False, horizontal_scrollbar=True):
         with dpg.group(horizontal=True):
@@ -247,6 +398,19 @@ def _build_console() -> None:
 # Status bar
 
 def _build_statusbar() -> None:
+    """
+    Build the application status bar.
+
+    Displays runtime information including:
+        - Training status indicator
+        - Node and link counts
+        - Undo/redo stack depth
+        - Current project name
+        - Session timestamp
+
+    Returns:
+        None
+    """
     with dpg.child_window(tag="statusbar", height=STATUSBAR_H,
                            border=False, no_scrollbar=True):
         with dpg.group(horizontal=True):
