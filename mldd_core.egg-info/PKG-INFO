@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: mldd-core
-Version: 1.0.1
+Version: 1.0.2
 Summary: Visual Drag-and-drop Machine Learning Trainer
 Author: Shivam Sharma
 License: MIT License
@@ -40,7 +40,7 @@ Requires-Dist: torch>=2.0.0; extra == "training"
 Requires-Dist: torchvision>=0.15.0; extra == "training"
 Dynamic: license-file
 
-# ML Forge
+# ML D&D
 
 A visual PyTorch pipeline editor. Build, train and run image classification models without writing code.
 ![ML D&D screenshot](ml_D_D/assets/showcase.gif)
