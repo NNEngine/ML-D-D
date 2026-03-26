@@ -13,7 +13,7 @@ A visual PyTorch pipeline editor. Build, train and run image classification mode
 
 
 ## Requirements
-**IMPORTANT**: PyTorch must be preinstalled for training, it is not installed as a dependency.
+**IMPORTANT**: PyTorch mus2t be preinstalled for training, it is not installed as a dependency.
 
 - Python 3.10 or newer
 - PyTorch 2.0 or newer
