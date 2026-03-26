@@ -1,0 +1,267 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.engine.metrics &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ml_D_D.engine.metrics</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ml_D_D.engine.metrics</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">metrics.py</span>
+<span class="sd">Metrics window - shows a live summary of the most recent training run.</span>
+
+<span class="sd">Reads directly from state.train_state which is populated by runner.py</span>
+<span class="sd">during and after training. Can be opened at any time; updates on each</span>
+<span class="sd">open to reflect the latest data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dearpygui.dearpygui</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dpg</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ml_D_D.state</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">state</span>
+
+
+<div class="viewcode-block" id="open_metrics_window">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.metrics.open_metrics_window">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">open_metrics_window</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="s2">&quot;metrics_window&quot;</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+
+    <span class="n">vw</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_viewport_client_width</span><span class="p">()</span>
+    <span class="n">vh</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_viewport_client_height</span><span class="p">()</span>
+    <span class="n">ww</span><span class="p">,</span> <span class="n">wh</span> <span class="o">=</span> <span class="mi">540</span><span class="p">,</span> <span class="mi">580</span>
+    <span class="n">px</span> <span class="o">=</span> <span class="p">(</span><span class="n">vw</span> <span class="o">-</span> <span class="n">ww</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">py</span> <span class="o">=</span> <span class="p">(</span><span class="n">vh</span> <span class="o">-</span> <span class="n">wh</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">window</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Training Metrics&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">ww</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">wh</span><span class="p">,</span>
+                    <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">),</span> <span class="n">no_collapse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">modal</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="n">ts</span>     <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">train_state</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;idle&quot;</span><span class="p">)</span>
+        <span class="n">epochs</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot_epochs&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">tl</span>     <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot_tl&quot;</span><span class="p">,</span>     <span class="p">[])</span>
+        <span class="n">vl</span>     <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot_vl&quot;</span><span class="p">,</span>     <span class="p">[])</span>
+        <span class="n">va</span>     <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot_va&quot;</span><span class="p">,</span>     <span class="p">[])</span>
+        <span class="n">bx</span>     <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot_batch_x&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">by</span>     <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot_batch_y&quot;</span><span class="p">,</span> <span class="p">[])</span>
+
+        <span class="n">has_data</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+
+        <span class="c1"># Header</span>
+        <span class="n">status_col</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;idle&quot;</span><span class="p">:</span>    <span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">),</span>
+            <span class="s2">&quot;running&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span>
+            <span class="s2">&quot;paused&quot;</span><span class="p">:</span>  <span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span>  <span class="mi">60</span><span class="p">),</span>
+        <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Status: </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">status_col</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_data</span><span class="p">:</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;No training data yet.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Run training first, then re-open this window.&quot;</span><span class="p">,</span>
+                         <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Refresh&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                           <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_refresh</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Summary table</span>
+        <span class="n">total_epochs</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;total_epochs&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">epochs</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Epochs completed: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">total_epochs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                     <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+        <span class="n">best_vl_epoch</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="n">vl</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">vl</span><span class="p">))]</span> <span class="k">if</span> <span class="n">vl</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">best_va_epoch</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="n">va</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">va</span><span class="p">))]</span> <span class="k">if</span> <span class="n">va</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">final_tl</span> <span class="o">=</span> <span class="n">tl</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="k">if</span> <span class="n">tl</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">final_vl</span> <span class="o">=</span> <span class="n">vl</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="k">if</span> <span class="n">vl</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">final_va</span> <span class="o">=</span> <span class="n">va</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="k">if</span> <span class="n">va</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_row</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">)):</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">horizontal</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">&lt;28</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">))</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Final epoch&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">final_tl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_row</span><span class="p">(</span><span class="s2">&quot;  Train loss&quot;</span><span class="p">,</span>       <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">final_tl</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">final_vl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_row</span><span class="p">(</span><span class="s2">&quot;  Val loss&quot;</span><span class="p">,</span>         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">final_vl</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">final_va</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_row</span><span class="p">(</span><span class="s2">&quot;  Val accuracy&quot;</span><span class="p">,</span>     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">final_va</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">,</span>
+                 <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">220</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span> <span class="k">if</span> <span class="n">final_va</span> <span class="o">&gt;=</span> <span class="mf">0.9</span> <span class="k">else</span>
+                       <span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span> <span class="k">if</span> <span class="n">final_va</span> <span class="o">&gt;=</span> <span class="mf">0.7</span> <span class="k">else</span> <span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">80</span><span class="p">))</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Best epoch&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">vl</span><span class="p">:</span>
+            <span class="n">_row</span><span class="p">(</span><span class="s2">&quot;  Best val loss&quot;</span><span class="p">,</span>    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">vl</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">  (epoch </span><span class="si">{</span><span class="n">best_vl_epoch</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+                 <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">va</span> <span class="ow">and</span> <span class="nb">max</span><span class="p">(</span><span class="n">va</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">_row</span><span class="p">(</span><span class="s2">&quot;  Best val acc&quot;</span><span class="p">,</span>     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">va</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%  (epoch </span><span class="si">{</span><span class="n">best_va_epoch</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+                 <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">220</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tl</span> <span class="ow">and</span> <span class="n">vl</span><span class="p">:</span>
+            <span class="n">overfit_gap</span> <span class="o">=</span> <span class="n">final_tl</span> <span class="o">-</span> <span class="n">final_vl</span>
+            <span class="k">if</span> <span class="n">overfit_gap</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">0.05</span><span class="p">:</span>
+                <span class="n">overfit_msg</span> <span class="o">=</span> <span class="s2">&quot;Possible overfitting (val loss &gt; train loss)&quot;</span>
+                <span class="n">overfit_col</span> <span class="o">=</span> <span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">abs</span><span class="p">(</span><span class="n">overfit_gap</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">0.05</span><span class="p">:</span>
+                <span class="n">overfit_msg</span> <span class="o">=</span> <span class="s2">&quot;Good fit (train and val loss close)&quot;</span>
+                <span class="n">overfit_col</span> <span class="o">=</span> <span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">220</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">overfit_msg</span> <span class="o">=</span> <span class="s2">&quot;Underfitting (train loss still high)&quot;</span>
+                <span class="n">overfit_col</span> <span class="o">=</span> <span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">130</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+            <span class="n">_row</span><span class="p">(</span><span class="s2">&quot;  Fit diagnosis&quot;</span><span class="p">,</span>    <span class="n">overfit_msg</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">overfit_col</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+        <span class="c1"># Loss curve plot</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Loss per epoch&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">no_title</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_plot_legend</span><span class="p">()</span>
+            <span class="n">xax</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">add_plot_axis</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvXAxis</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Epoch&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">set_axis_limits</span><span class="p">(</span><span class="n">xax</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span> <span class="k">if</span> <span class="n">epochs</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">plot_axis</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvYAxis</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Loss&quot;</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_line_series</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">tl</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Train&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">v</span> <span class="o">!=</span> <span class="n">t</span> <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">vl</span><span class="p">,</span> <span class="n">tl</span><span class="p">)):</span>
+                    <span class="n">dpg</span><span class="o">.</span><span class="n">add_line_series</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">vl</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Val&quot;</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+        <span class="c1"># Accuracy curve plot</span>
+        <span class="k">if</span> <span class="n">va</span> <span class="ow">and</span> <span class="nb">max</span><span class="p">(</span><span class="n">va</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Accuracy per epoch&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">no_title</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_plot_legend</span><span class="p">()</span>
+                <span class="n">xax2</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">add_plot_axis</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvXAxis</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Epoch&quot;</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">set_axis_limits</span><span class="p">(</span><span class="n">xax2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span> <span class="k">if</span> <span class="n">epochs</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">plot_axis</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvYAxis</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Accuracy&quot;</span><span class="p">):</span>
+                    <span class="n">dpg</span><span class="o">.</span><span class="n">set_axis_limits</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">last_item</span><span class="p">(),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+                    <span class="n">dpg</span><span class="o">.</span><span class="n">add_line_series</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">va</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Val acc&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+        <span class="c1"># Batch loss plot</span>
+        <span class="k">if</span> <span class="n">bx</span> <span class="ow">and</span> <span class="n">by</span><span class="p">:</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Batch loss (smoothed)&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">no_title</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="n">xax3</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">add_plot_axis</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvXAxis</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Epoch (continuous)&quot;</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">plot_axis</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvYAxis</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Loss&quot;</span><span class="p">):</span>
+                    <span class="n">dpg</span><span class="o">.</span><span class="n">add_line_series</span><span class="p">(</span><span class="n">bx</span><span class="p">,</span> <span class="n">by</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Batch loss&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+        <span class="c1"># Refresh button</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Refresh&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                       <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_refresh</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_refresh</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Close and reopen the window to pull latest data.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+    <span class="n">open_metrics_window</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,464 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.graph.tabs &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ml_D_D.graph.tabs</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ml_D_D.graph.tabs</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">tabs.py</span>
+<span class="sd">Tab lifecycle management; creation, closure, renaming, and the</span>
+<span class="sd">active-tab sync that runs every frame in the render loop.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dearpygui.dearpygui</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dpg</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ml_D_D.state</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">state</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.console</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+
+
+<span class="c1"># Tag helpers</span>
+
+<div class="viewcode-block" id="editor_tag">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.tabs.editor_tag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">editor_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ne_</span><span class="si">{</span><span class="n">tid</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="tab_tag">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.tabs.tab_tag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tab_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;tab_</span><span class="si">{</span><span class="n">tid</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<span class="c1"># Accessors</span>
+
+<div class="viewcode-block" id="current_tab">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.tabs.current_tab">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">current_tab</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the dict for the currently active tab, or None.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># Lifecycle</span>
+
+<div class="viewcode-block" id="new_tab">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.tabs.new_tab">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">new_tab</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a new tab, add it to the tab bar, and make it active.</span>
+<span class="sd">    role: &quot;data_prep&quot; | &quot;model&quot; | &quot;training&quot; | None</span>
+<span class="sd">    Returns the new tab id.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">link_callback</span><span class="p">,</span> <span class="n">delink_callback</span>
+
+    <span class="n">state</span><span class="o">.</span><span class="n">tab_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">tid</span>  <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">tab_counter</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;Graph </span><span class="si">{</span><span class="n">tid</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span>         <span class="n">name</span><span class="p">,</span>
+        <span class="s2">&quot;role&quot;</span><span class="p">:</span>         <span class="n">role</span><span class="p">,</span>
+        <span class="s2">&quot;editor_tag&quot;</span><span class="p">:</span>   <span class="n">editor_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">),</span>
+        <span class="s2">&quot;tab_tag&quot;</span><span class="p">:</span>      <span class="n">tab_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">),</span>
+        <span class="s2">&quot;nodes&quot;</span><span class="p">:</span>        <span class="p">{},</span>
+        <span class="s2">&quot;links&quot;</span><span class="p">:</span>        <span class="p">{},</span>
+        <span class="s2">&quot;node_counter&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;link_counter&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;undo_stack&quot;</span><span class="p">:</span>   <span class="p">[],</span>
+        <span class="s2">&quot;redo_stack&quot;</span><span class="p">:</span>   <span class="p">[],</span>
+    <span class="p">}</span>
+
+    <span class="n">ttag</span> <span class="o">=</span> <span class="n">tab_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">tab</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">ttag</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="s2">&quot;canvas_tabbar&quot;</span><span class="p">):</span>
+        <span class="c1"># if role:</span>
+        <span class="c1">#     from graph.pipeline import ROLES</span>
+        <span class="c1">#     col = ROLES[role][&quot;color&quot;]</span>
+        <span class="c1">#     with dpg.theme() as tab_theme:</span>
+        <span class="c1">#         with dpg.theme_component(dpg.mvTab):</span>
+        <span class="c1">#             dpg.add_theme_color(dpg.mvThemeCol_Text, col)</span>
+        <span class="c1">#     dpg.bind_item_theme(ttag, tab_theme)</span>
+
+        <span class="n">cw_tag</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;canvas_cw_</span><span class="si">{</span><span class="n">tid</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">child_window</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="n">cw_tag</span><span class="p">,</span> <span class="n">border</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                               <span class="n">no_scrollbar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">height</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">node_editor</span><span class="p">(</span>
+                <span class="n">tag</span><span class="o">=</span><span class="n">editor_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">),</span>
+                <span class="n">callback</span><span class="o">=</span><span class="n">link_callback</span><span class="p">,</span>
+                <span class="n">delink_callback</span><span class="o">=</span><span class="n">delink_callback</span><span class="p">,</span>
+                <span class="n">minimap</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">minimap_location</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeMiniMap_Location_BottomRight</span><span class="p">,</span>
+                <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="n">_add_hint_node</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span> <span class="n">role</span><span class="p">)</span>
+
+    <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;canvas_tabbar&quot;</span><span class="p">,</span> <span class="n">ttag</span><span class="p">)</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span> <span class="o">=</span> <span class="n">tid</span>
+    <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Tab &quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&quot; created.&#39;</span><span class="p">,</span> <span class="s2">&quot;debug&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tid</span></div>
+
+
+
+<span class="n">_HINT_LINES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;data_prep&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;Welcome to the Data Prep tab.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Build your dataset pipeline here:&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  1. Add a Dataset node&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;     (MNIST, CIFAR10, CIFAR100, FashionMNIST)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  2. Chain transforms    (ToTensor, Normalize, ...)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  3. End with a DataLoader (train) node&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  4. Optionally add a second chain ending&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;     with DataLoader (val) for validation&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Drag nodes from the left palette to get started.&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;Welcome to the Model tab.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Build your neural network here:&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  1. Start with an Input node&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  2. Add layers  (Linear, Conv2D, ReLU, ...)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  3. End with an Output node&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Connect nodes by dragging from an output pin&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;to an input pin.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Drag nodes from the left palette to get started.&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;training&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;Welcome to the Training tab.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Wire up your training graph here:&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  1. Add ModelBlock and DataLoaderBlock&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;     (they represent your Model and Data Prep tabs)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  2. Add a Loss node  (CrossEntropyLoss, etc.)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  3. Add an Optimizer  (Adam, SGD, etc.)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  4. Connect:&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;       DataLoaderBlock.images  -&gt; ModelBlock.images&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;       ModelBlock.predictions  -&gt; Loss.pred&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;       DataLoaderBlock.labels  -&gt; Loss.target&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;       Loss.loss               -&gt; Optimizer.params&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Then press RUN in the toolbar to train.&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="kc">None</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;Drag nodes from the palette on the left.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Connect output pins to input pins to wire them up.&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_hint_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;hint_node_</span><span class="si">{</span><span class="n">tid</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_hint_node</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">role</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a read-only hint node at the centre of the canvas.&quot;&quot;&quot;</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">_HINT_LINES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">_HINT_LINES</span><span class="p">[</span><span class="kc">None</span><span class="p">])</span>
+    <span class="n">htag</span>  <span class="o">=</span> <span class="n">_hint_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Getting Started&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">htag</span><span class="p">,</span>
+                  <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="mi">120</span><span class="p">)):</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme</span><span class="p">()</span> <span class="k">as</span> <span class="n">hint_theme</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme_component</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNode</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeCol_TitleBar</span><span class="p">,</span>
+                                    <span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="n">category</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCat_Nodes</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeCol_TitleBarHovered</span><span class="p">,</span>
+                                    <span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span> <span class="n">category</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCat_Nodes</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeCol_TitleBarSelected</span><span class="p">,</span>
+                                    <span class="p">(</span><span class="mi">70</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">70</span><span class="p">),</span> <span class="n">category</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCat_Nodes</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeCol_NodeBackground</span><span class="p">,</span>
+                                    <span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span> <span class="n">category</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCat_Nodes</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">bind_item_theme</span><span class="p">(</span><span class="n">htag</span><span class="p">,</span> <span class="n">hint_theme</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">node_attribute</span><span class="p">(</span><span class="n">attribute_type</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNode_Attr_Static</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                    <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">col</span> <span class="o">=</span> <span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">)</span>
+                    <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_remove_hint_node</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delete the hint node if it still exists.&quot;&quot;&quot;</span>
+    <span class="n">htag</span> <span class="o">=</span> <span class="n">_hint_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">htag</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">htag</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="close_tab">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.tabs.close_tab">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">close_tab</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Close tab `tid`, cleaning up all its nodes and DearPyGui items.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_forge.graph.nodes</span><span class="w"> </span><span class="kn">import</span> <span class="n">raw_delete_node</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_forge.ui.statusbar</span><span class="w"> </span><span class="kn">import</span> <span class="n">refresh_status</span>
+
+    <span class="k">if</span> <span class="n">tid</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">tid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">ntag</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="n">raw_delete_node</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span> <span class="n">ntag</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tab_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">)):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">tab_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">))</span>
+    <span class="k">del</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span>
+    <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Tab &quot;</span><span class="si">{</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&quot; closed.&#39;</span><span class="p">,</span> <span class="s2">&quot;debug&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;canvas_tabbar&quot;</span><span class="p">,</span> <span class="n">tab_tag</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">refresh_status</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="assign_role">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.tabs.assign_role">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">assign_role</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assign or clear the pipeline role for tab `tid`.</span>
+<span class="sd">    Updates the tab header colour and refreshes the pipeline bar.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_forge.graph.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">ROLES</span><span class="p">,</span> <span class="n">refresh_pipeline_bar</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">ml_forge.graph.pipeline</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_pipeline</span>
+
+    <span class="k">if</span> <span class="n">tid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span>
+    <span class="n">t</span><span class="p">[</span><span class="s2">&quot;role&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">role</span>
+
+    <span class="n">ttag</span> <span class="o">=</span> <span class="n">tab_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">ttag</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="n">role</span> <span class="ow">and</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">ROLES</span><span class="p">:</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="n">ROLES</span><span class="p">[</span><span class="n">role</span><span class="p">][</span><span class="s2">&quot;color&quot;</span><span class="p">]</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme</span><span class="p">()</span> <span class="k">as</span> <span class="n">tab_theme</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme_component</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvTab</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCol_Text</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">bind_item_theme</span><span class="p">(</span><span class="n">ttag</span><span class="p">,</span> <span class="n">tab_theme</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">bind_item_theme</span><span class="p">(</span><span class="n">ttag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">_pipeline</span><span class="o">.</span><span class="n">_last_pipeline_state</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">refresh_pipeline_bar</span><span class="p">()</span>
+    <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Tab &quot;</span><span class="si">{</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&quot; role set to </span><span class="si">{</span><span class="n">role</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s2">&quot;none&quot;</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">,</span> <span class="s2">&quot;debug&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="open_assign_role_dialog">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.tabs.open_assign_role_dialog">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">open_assign_role_dialog</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Show a popup to assign a pipeline role to the active tab.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_forge.graph.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">ROLES</span><span class="p">,</span> <span class="n">ROLE_ORDER</span>
+
+    <span class="n">tid</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span>
+    <span class="k">if</span> <span class="n">tid</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">tid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">tag</span> <span class="o">=</span> <span class="s2">&quot;assign_role_popup&quot;</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+
+    <span class="n">current_role</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;role&quot;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">window</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Assign Tab Role&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">modal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">no_resize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">260</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+                    <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">300</span><span class="p">)):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Assigning role for: </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="n">tid</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                     <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">ROLE_ORDER</span><span class="p">:</span>
+            <span class="n">info</span>  <span class="o">=</span> <span class="n">ROLES</span><span class="p">[</span><span class="n">role</span><span class="p">]</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span>
+            <span class="n">col</span>   <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span>
+            <span class="n">marker</span> <span class="o">=</span> <span class="s2">&quot; (current)&quot;</span> <span class="k">if</span> <span class="n">role</span> <span class="o">==</span> <span class="n">current_role</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">_make_cb</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="n">role</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">tag</span><span class="p">):</span>
+                <span class="k">def</span><span class="w"> </span><span class="nf">cb</span><span class="p">():</span>
+                    <span class="n">assign_role</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+                        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">cb</span>
+
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}{</span><span class="n">marker</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                           <span class="n">callback</span><span class="o">=</span><span class="n">_make_cb</span><span class="p">())</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme</span><span class="p">()</span> <span class="k">as</span> <span class="n">btn_th</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme_component</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvButton</span><span class="p">):</span>
+                    <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCol_Button</span><span class="p">,</span>
+                                        <span class="p">(</span><span class="o">*</span><span class="n">col</span><span class="p">,</span> <span class="mi">80</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">bind_item_theme</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">last_item</span><span class="p">(),</span> <span class="n">btn_th</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Clear role&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                       <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span>
+                           <span class="n">assign_role</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                           <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                       <span class="p">])</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Cancel&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                       <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+                                        <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="rename_tab">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.tabs.rename_tab">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rename_tab</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">new_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rename a tab both in state and in the DearPyGui label.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">tid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="n">tid</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_name</span>
+    <span class="n">dpg</span><span class="o">.</span><span class="n">set_item_label</span><span class="p">(</span><span class="n">tab_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">),</span> <span class="n">new_name</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># Per-frame sync</span>
+
+<div class="viewcode-block" id="sync_active_tab">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.tabs.sync_active_tab">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sync_active_tab</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Poll the tab bar every frame to keep state.active_tab_id in sync</span>
+<span class="sd">    with whichever tab the user has clicked on.</span>
+
+<span class="sd">    dpg.get_value() on a tab_bar returns the internal integer ID of the</span>
+<span class="sd">    selected tab item - so we resolve each tab&#39;s tag to its item ID</span>
+<span class="sd">    via dpg.get_alias_id() before comparing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.statusbar</span><span class="w"> </span><span class="kn">import</span> <span class="n">refresh_status</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;canvas_tabbar&quot;</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="n">selected_id</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="s2">&quot;canvas_tabbar&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">tid</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">:</span>
+        <span class="n">ttag</span> <span class="o">=</span> <span class="n">tab_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">ttag</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_alias_id</span><span class="p">(</span><span class="n">ttag</span><span class="p">)</span> <span class="o">==</span> <span class="n">selected_id</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span> <span class="o">!=</span> <span class="n">tid</span><span class="p">:</span>
+                    <span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span> <span class="o">=</span> <span class="n">tid</span>
+                    <span class="n">refresh_status</span><span class="p">()</span>
+                <span class="k">break</span></div>
+
+
+
+<span class="c1"># Tab bar change callback</span>
+
+<div class="viewcode-block" id="on_tab_change">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.tabs.on_tab_change">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_tab_change</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">app_data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DearPyGui callback - fires when user clicks a tab.</span>
+<span class="sd">    app_data is the integer item ID of the newly selected tab.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.statusbar</span><span class="w"> </span><span class="kn">import</span> <span class="n">refresh_status</span>
+
+    <span class="k">for</span> <span class="n">tid</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">:</span>
+        <span class="n">ttag</span> <span class="o">=</span> <span class="n">tab_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">ttag</span><span class="p">)</span> <span class="ow">and</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_alias_id</span><span class="p">(</span><span class="n">ttag</span><span class="p">)</span> <span class="o">==</span> <span class="n">app_data</span><span class="p">:</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span> <span class="o">=</span> <span class="n">tid</span>
+            <span class="n">refresh_status</span><span class="p">()</span>
+            <span class="k">break</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

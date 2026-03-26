@@ -1,0 +1,340 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D package &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">ml_D_D package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ml_D_D.constants">ml_D_D.constants module</a></li>
+<li><a class="reference internal" href="#module-ml_D_D.main">ml_D_D.main module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.main.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.state">ml_D_D.state module</a></li>
+<li><a class="reference internal" href="#module-ml_D_D">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ml_D_D package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/ml_D_D.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ml-d-d-package">
+<h1>ml_D_D package<a class="headerlink" href="#ml-d-d-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ml_D_D.engine.html">ml_D_D.engine package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.engine.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.engine.html#module-ml_D_D.engine.autofill">ml_D_D.engine.autofill module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.autofill.check_dimension_mismatches"><code class="docutils literal notranslate"><span class="pre">check_dimension_mismatches()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.autofill.infer_from_dataset"><code class="docutils literal notranslate"><span class="pre">infer_from_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.autofill.on_dataset_changed"><code class="docutils literal notranslate"><span class="pre">on_dataset_changed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.autofill.on_link_made"><code class="docutils literal notranslate"><span class="pre">on_link_made()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.autofill.on_node_spawned"><code class="docutils literal notranslate"><span class="pre">on_node_spawned()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.autofill.on_param_changed"><code class="docutils literal notranslate"><span class="pre">on_param_changed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.autofill.propagate_all"><code class="docutils literal notranslate"><span class="pre">propagate_all()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.autofill.propagate_from_link"><code class="docutils literal notranslate"><span class="pre">propagate_from_link()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.engine.html#module-ml_D_D.engine.blocks">ml_D_D.engine.blocks module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.blocks.all_block_labels"><code class="docutils literal notranslate"><span class="pre">all_block_labels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.blocks.get_block_def"><code class="docutils literal notranslate"><span class="pre">get_block_def()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.engine.html#module-ml_D_D.engine.generator">ml_D_D.engine.generator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.generator.export_pytorch"><code class="docutils literal notranslate"><span class="pre">export_pytorch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.generator.generate_pytorch"><code class="docutils literal notranslate"><span class="pre">generate_pytorch()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.engine.html#module-ml_D_D.engine.graph">ml_D_D.engine.graph module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.CycleError"><code class="docutils literal notranslate"><span class="pre">CycleError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.GraphNode"><code class="docutils literal notranslate"><span class="pre">GraphNode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.GraphNode.block_label"><code class="docutils literal notranslate"><span class="pre">GraphNode.block_label</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.GraphNode.connected_inputs"><code class="docutils literal notranslate"><span class="pre">GraphNode.connected_inputs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.GraphNode.connected_outputs"><code class="docutils literal notranslate"><span class="pre">GraphNode.connected_outputs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.GraphNode.inputs"><code class="docutils literal notranslate"><span class="pre">GraphNode.inputs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.GraphNode.ntag"><code class="docutils literal notranslate"><span class="pre">GraphNode.ntag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.GraphNode.outputs"><code class="docutils literal notranslate"><span class="pre">GraphNode.outputs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.GraphNode.params"><code class="docutils literal notranslate"><span class="pre">GraphNode.params</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.Issue"><code class="docutils literal notranslate"><span class="pre">Issue</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.Issue.message"><code class="docutils literal notranslate"><span class="pre">Issue.message</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.Issue.ntag"><code class="docutils literal notranslate"><span class="pre">Issue.ntag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.Issue.severity"><code class="docutils literal notranslate"><span class="pre">Issue.severity</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.ValidationResult"><code class="docutils literal notranslate"><span class="pre">ValidationResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.ValidationResult.add_error"><code class="docutils literal notranslate"><span class="pre">ValidationResult.add_error()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.ValidationResult.add_warning"><code class="docutils literal notranslate"><span class="pre">ValidationResult.add_warning()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.ValidationResult.errors"><code class="docutils literal notranslate"><span class="pre">ValidationResult.errors</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.ValidationResult.issues"><code class="docutils literal notranslate"><span class="pre">ValidationResult.issues</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.ValidationResult.ok"><code class="docutils literal notranslate"><span class="pre">ValidationResult.ok</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.ValidationResult.warnings"><code class="docutils literal notranslate"><span class="pre">ValidationResult.warnings</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.build_graph"><code class="docutils literal notranslate"><span class="pre">build_graph()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.get_tab_by_role"><code class="docutils literal notranslate"><span class="pre">get_tab_by_role()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.topological_sort"><code class="docutils literal notranslate"><span class="pre">topological_sort()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.graph.validate_pipeline"><code class="docutils literal notranslate"><span class="pre">validate_pipeline()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.engine.html#module-ml_D_D.engine.inference">ml_D_D.engine.inference module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.inference.open_inference_window"><code class="docutils literal notranslate"><span class="pre">open_inference_window()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.engine.html#module-ml_D_D.engine.metrics">ml_D_D.engine.metrics module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.metrics.open_metrics_window"><code class="docutils literal notranslate"><span class="pre">open_metrics_window()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.engine.html#module-ml_D_D.engine.run">ml_D_D.engine.run module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.run.drain_result_queue"><code class="docutils literal notranslate"><span class="pre">drain_result_queue()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.run.is_paused"><code class="docutils literal notranslate"><span class="pre">is_paused()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.run.pause_training"><code class="docutils literal notranslate"><span class="pre">pause_training()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.run.start_training"><code class="docutils literal notranslate"><span class="pre">start_training()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.engine.html#ml_D_D.engine.run.stop_training"><code class="docutils literal notranslate"><span class="pre">stop_training()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.engine.html#ml-d-d-engine-training-setup-module">ml_D_D.engine.training_setup module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.engine.html#module-ml_D_D.engine">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ml_D_D.filesystem.html">ml_D_D.filesystem package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.filesystem.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.filesystem.html#module-ml_D_D.filesystem.save">ml_D_D.filesystem.save module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.filesystem.html#ml_D_D.filesystem.save.load_project"><code class="docutils literal notranslate"><span class="pre">load_project()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.filesystem.html#ml_D_D.filesystem.save.open_load_dialog"><code class="docutils literal notranslate"><span class="pre">open_load_dialog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.filesystem.html#ml_D_D.filesystem.save.open_save_dialog"><code class="docutils literal notranslate"><span class="pre">open_save_dialog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.filesystem.html#ml_D_D.filesystem.save.save_current"><code class="docutils literal notranslate"><span class="pre">save_current()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.filesystem.html#ml_D_D.filesystem.save.save_project"><code class="docutils literal notranslate"><span class="pre">save_project()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.filesystem.html#module-ml_D_D.filesystem">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ml_D_D.graph.html">ml_D_D.graph package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.graph.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.graph.html#module-ml_D_D.graph.links">ml_D_D.graph.links module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.links.delink_callback"><code class="docutils literal notranslate"><span class="pre">delink_callback()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.links.link_callback"><code class="docutils literal notranslate"><span class="pre">link_callback()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.graph.html#module-ml_D_D.graph.nodes">ml_D_D.graph.nodes module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.nodes.attr_in_tag"><code class="docutils literal notranslate"><span class="pre">attr_in_tag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.nodes.attr_out_tag"><code class="docutils literal notranslate"><span class="pre">attr_out_tag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.nodes.attr_param_tag"><code class="docutils literal notranslate"><span class="pre">attr_param_tag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.nodes.clear_canvas"><code class="docutils literal notranslate"><span class="pre">clear_canvas()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.nodes.delete_node"><code class="docutils literal notranslate"><span class="pre">delete_node()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.nodes.delete_selected_nodes"><code class="docutils literal notranslate"><span class="pre">delete_selected_nodes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.nodes.input_field_tag"><code class="docutils literal notranslate"><span class="pre">input_field_tag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.nodes.node_tag"><code class="docutils literal notranslate"><span class="pre">node_tag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.nodes.raw_delete_node"><code class="docutils literal notranslate"><span class="pre">raw_delete_node()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.nodes.raw_spawn_node"><code class="docutils literal notranslate"><span class="pre">raw_spawn_node()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.nodes.spawn_node"><code class="docutils literal notranslate"><span class="pre">spawn_node()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.graph.html#module-ml_D_D.graph.pipeline">ml_D_D.graph.pipeline module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.pipeline.get_stage_statuses"><code class="docutils literal notranslate"><span class="pre">get_stage_statuses()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.pipeline.pipeline_ready"><code class="docutils literal notranslate"><span class="pre">pipeline_ready()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.pipeline.refresh_pipeline_bar"><code class="docutils literal notranslate"><span class="pre">refresh_pipeline_bar()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.graph.html#module-ml_D_D.graph.tabs">ml_D_D.graph.tabs module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.tabs.assign_role"><code class="docutils literal notranslate"><span class="pre">assign_role()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.tabs.close_tab"><code class="docutils literal notranslate"><span class="pre">close_tab()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.tabs.current_tab"><code class="docutils literal notranslate"><span class="pre">current_tab()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.tabs.editor_tag"><code class="docutils literal notranslate"><span class="pre">editor_tag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.tabs.new_tab"><code class="docutils literal notranslate"><span class="pre">new_tab()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.tabs.on_tab_change"><code class="docutils literal notranslate"><span class="pre">on_tab_change()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.tabs.open_assign_role_dialog"><code class="docutils literal notranslate"><span class="pre">open_assign_role_dialog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.tabs.rename_tab"><code class="docutils literal notranslate"><span class="pre">rename_tab()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.tabs.sync_active_tab"><code class="docutils literal notranslate"><span class="pre">sync_active_tab()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.tabs.tab_tag"><code class="docutils literal notranslate"><span class="pre">tab_tag()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.graph.html#module-ml_D_D.graph.undo">ml_D_D.graph.undo module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.undo.push_undo"><code class="docutils literal notranslate"><span class="pre">push_undo()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.undo.redo"><code class="docutils literal notranslate"><span class="pre">redo()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.undo.refresh_undo_menu"><code class="docutils literal notranslate"><span class="pre">refresh_undo_menu()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.graph.html#ml_D_D.graph.undo.undo"><code class="docutils literal notranslate"><span class="pre">undo()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.graph.html#module-ml_D_D.graph">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ml_D_D.ui.html">ml_D_D.ui package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.ui.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.ui.html#module-ml_D_D.ui.console">ml_D_D.ui.console module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.console.clear_console"><code class="docutils literal notranslate"><span class="pre">clear_console()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.console.log"><code class="docutils literal notranslate"><span class="pre">log()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.ui.html#module-ml_D_D.ui.layout">ml_D_D.ui.layout module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.layout.build_main_window"><code class="docutils literal notranslate"><span class="pre">build_main_window()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.ui.html#module-ml_D_D.ui.menubar">ml_D_D.ui.menubar module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.menubar.build_menubar"><code class="docutils literal notranslate"><span class="pre">build_menubar()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.ui.html#module-ml_D_D.ui.palette">ml_D_D.ui.palette module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.palette.on_search"><code class="docutils literal notranslate"><span class="pre">on_search()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.palette.rebuild_palette"><code class="docutils literal notranslate"><span class="pre">rebuild_palette()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.ui.html#module-ml_D_D.ui.resize">ml_D_D.ui.resize module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.resize.resize_callback"><code class="docutils literal notranslate"><span class="pre">resize_callback()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.ui.html#module-ml_D_D.ui.statusbar">ml_D_D.ui.statusbar module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.statusbar.refresh_status"><code class="docutils literal notranslate"><span class="pre">refresh_status()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.ui.html#module-ml_D_D.ui.summary">ml_D_D.ui.summary module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.summary.refresh_model_summary"><code class="docutils literal notranslate"><span class="pre">refresh_model_summary()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.ui.html#module-ml_D_D.ui.toolbar">ml_D_D.ui.toolbar module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.toolbar.build_toolbar"><code class="docutils literal notranslate"><span class="pre">build_toolbar()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.ui.html#module-ml_D_D.ui.training">ml_D_D.ui.training module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.training.apply_train_btn_style"><code class="docutils literal notranslate"><span class="pre">apply_train_btn_style()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.training.clear_highlights"><code class="docutils literal notranslate"><span class="pre">clear_highlights()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.training.highlight_issues"><code class="docutils literal notranslate"><span class="pre">highlight_issues()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.training.on_pause"><code class="docutils literal notranslate"><span class="pre">on_pause()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.training.on_run"><code class="docutils literal notranslate"><span class="pre">on_run()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.training.on_stop"><code class="docutils literal notranslate"><span class="pre">on_stop()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.training.tick_training"><code class="docutils literal notranslate"><span class="pre">tick_training()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.training.update_cuda_stats"><code class="docutils literal notranslate"><span class="pre">update_cuda_stats()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml_D_D.ui.html#ml_D_D.ui.training.update_status_indicator"><code class="docutils literal notranslate"><span class="pre">update_status_indicator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml_D_D.ui.html#module-ml_D_D.ui">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-ml_D_D.constants">
+<span id="ml-d-d-constants-module"></span><h2>ml_D_D.constants module<a class="headerlink" href="#module-ml_D_D.constants" title="Link to this heading"></a></h2>
+<p>constants.py
+All numeric layout constants and tuneable behaviour values.</p>
+</section>
+<section id="module-ml_D_D.main">
+<span id="ml-d-d-main-module"></span><h2>ml_D_D.main module<a class="headerlink" href="#module-ml_D_D.main" title="Link to this heading"></a></h2>
+<p>main.py
+ML Forge entry point.</p>
+<p>Initialises DearPyGui, shows a loading splash, builds the full UI,
+creates the three pipeline tabs, and runs the render loop.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.main.main">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.main.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/main.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.main.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.state">
+<span id="ml-d-d-state-module"></span><h2>ml_D_D.state module<a class="headerlink" href="#module-ml_D_D.state" title="Link to this heading"></a></h2>
+<p>state.py
+Single source of truth for all shared mutable application state.</p>
+</section>
+<section id="module-ml_D_D">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ml_D_D" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,359 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.graph.nodes &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ml_D_D.graph.nodes</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ml_D_D.graph.nodes</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">nodes.py</span>
+<span class="sd">Node spawn and delete operations, both raw (no undo) and public (with undo).</span>
+
+<span class="sd">Raw variants are used internally by the undo/redo snapshot system.</span>
+<span class="sd">Public variants are called from the UI and always push an undo snapshot first.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dearpygui.dearpygui</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dpg</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ml_D_D.state</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">state</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.blocks</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_block_def</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">NODE_GRID_COLS</span><span class="p">,</span> <span class="n">NODE_GRID_X_STEP</span><span class="p">,</span> <span class="n">NODE_GRID_Y_STEP</span><span class="p">,</span> <span class="n">NODE_GRID_ORIGIN</span>
+
+
+<div class="viewcode-block" id="node_tag">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.nodes.node_tag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">node_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">tid</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">nid</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="attr_in_tag">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.nodes.attr_in_tag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">attr_in_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pin</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">tid</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">nid</span><span class="si">}</span><span class="s2">_in_</span><span class="si">{</span><span class="n">pin</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="attr_out_tag">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.nodes.attr_out_tag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">attr_out_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pin</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">tid</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">nid</span><span class="si">}</span><span class="s2">_out_</span><span class="si">{</span><span class="n">pin</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="attr_param_tag">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.nodes.attr_param_tag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">attr_param_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">tid</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">nid</span><span class="si">}</span><span class="s2">_param_</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="input_field_tag">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.nodes.input_field_tag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">input_field_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">tid</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">nid</span><span class="si">}</span><span class="s2">_input_</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="raw_spawn_node">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.nodes.raw_spawn_node">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">raw_spawn_node</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">block_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">nid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">pos</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Spawn a node directly into tab `tid` without touching the undo stack.</span>
+<span class="sd">    Used by snapshot restore, persistence load, and the public spawn_node() wrapper.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        tid:         target tab id</span>
+<span class="sd">        block_label: block type name</span>
+<span class="sd">        nid:         force a specific node id (used by undo/load)</span>
+<span class="sd">        pos:         (x, y) canvas position; auto-grid if None</span>
+<span class="sd">        params:      dict of param_name -&gt; value to pre-fill fields</span>
+
+<span class="sd">    Returns the node_tag on success, None if block_label is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span>
+
+    <span class="c1"># Reserved NIDs (9000+) are used by system nodes like ModelBlock/DataLoaderBlock.</span>
+    <span class="n">RESERVED_NID_THRESHOLD</span> <span class="o">=</span> <span class="mi">9000</span>
+
+    <span class="k">if</span> <span class="n">nid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">t</span><span class="p">[</span><span class="s2">&quot;node_counter&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">nid</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="s2">&quot;node_counter&quot;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">nid</span> <span class="o">&lt;</span> <span class="n">RESERVED_NID_THRESHOLD</span><span class="p">:</span>
+            <span class="n">t</span><span class="p">[</span><span class="s2">&quot;node_counter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;node_counter&quot;</span><span class="p">],</span> <span class="n">nid</span><span class="p">)</span>
+        <span class="c1"># Reserved NIDs: do not update node_counter at all</span>
+
+    <span class="n">block</span> <span class="o">=</span> <span class="n">get_block_def</span><span class="p">(</span><span class="n">block_label</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">block</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">color</span> <span class="o">=</span> <span class="n">block</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span>
+    <span class="n">ntag</span>  <span class="o">=</span> <span class="n">node_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span> <span class="n">nid</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pos_x</span><span class="p">,</span> <span class="n">pos_y</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="k">elif</span> <span class="n">nid</span> <span class="o">&lt;</span> <span class="n">RESERVED_NID_THRESHOLD</span><span class="p">:</span>
+        <span class="n">col</span>   <span class="o">=</span> <span class="n">nid</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">pos_x</span> <span class="o">=</span> <span class="n">NODE_GRID_ORIGIN</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">col</span> <span class="o">%</span> <span class="n">NODE_GRID_COLS</span><span class="p">)</span> <span class="o">*</span> <span class="n">NODE_GRID_X_STEP</span>
+        <span class="n">pos_y</span> <span class="o">=</span> <span class="n">NODE_GRID_ORIGIN</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">col</span> <span class="o">//</span> <span class="n">NODE_GRID_COLS</span><span class="p">)</span> <span class="o">*</span> <span class="n">NODE_GRID_Y_STEP</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Fallback for reserved nodes spawned without an explicit pos</span>
+        <span class="n">pos_x</span><span class="p">,</span> <span class="n">pos_y</span> <span class="o">=</span> <span class="n">NODE_GRID_ORIGIN</span>
+
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">block_label</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">ntag</span><span class="p">,</span>
+                  <span class="n">parent</span><span class="o">=</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;editor_tag&quot;</span><span class="p">],</span> <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="n">pos_x</span><span class="p">,</span> <span class="n">pos_y</span><span class="p">)):</span>
+
+        <span class="c1"># Title bar colour theme</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme</span><span class="p">()</span> <span class="k">as</span> <span class="n">nth</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme_component</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNode</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeCol_TitleBar</span><span class="p">,</span>
+                                    <span class="n">color</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCat_Nodes</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeCol_TitleBarHovered</span><span class="p">,</span>
+                                    <span class="nb">tuple</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">c</span> <span class="o">+</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">color</span><span class="p">),</span>
+                                    <span class="n">category</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCat_Nodes</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeCol_TitleBarSelected</span><span class="p">,</span>
+                                    <span class="nb">tuple</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">c</span> <span class="o">+</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">color</span><span class="p">),</span>
+                                    <span class="n">category</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCat_Nodes</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">bind_item_theme</span><span class="p">(</span><span class="n">ntag</span><span class="p">,</span> <span class="n">nth</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">pin</span> <span class="ow">in</span> <span class="n">block</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]:</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">node_attribute</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">pin</span><span class="p">,</span>
+                                    <span class="n">attribute_type</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNode_Attr_Input</span><span class="p">,</span>
+                                    <span class="n">tag</span><span class="o">=</span><span class="n">attr_in_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span> <span class="n">nid</span><span class="p">,</span> <span class="n">pin</span><span class="p">)):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="n">pin</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">block</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]:</span>
+            <span class="n">default</span> <span class="o">=</span> <span class="p">(</span><span class="n">params</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">node_attribute</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">param</span><span class="p">,</span>
+                                    <span class="n">attribute_type</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNode_Attr_Static</span><span class="p">,</span>
+                                    <span class="n">tag</span><span class="o">=</span><span class="n">attr_param_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span> <span class="n">nid</span><span class="p">,</span> <span class="n">param</span><span class="p">)):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_input_text</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">param</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
+                                   <span class="n">width</span><span class="o">=</span><span class="mi">110</span><span class="p">,</span> <span class="n">hint</span><span class="o">=</span><span class="n">param</span><span class="p">,</span>
+                                   <span class="n">tag</span><span class="o">=</span><span class="n">input_field_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span> <span class="n">nid</span><span class="p">,</span> <span class="n">param</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">pin</span> <span class="ow">in</span> <span class="n">block</span><span class="p">[</span><span class="s2">&quot;outputs&quot;</span><span class="p">]:</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">node_attribute</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">pin</span><span class="p">,</span>
+                                    <span class="n">attribute_type</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNode_Attr_Output</span><span class="p">,</span>
+                                    <span class="n">tag</span><span class="o">=</span><span class="n">attr_out_tag</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span> <span class="n">nid</span><span class="p">,</span> <span class="n">pin</span><span class="p">)):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="n">pin</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">))</span>
+
+    <span class="n">t</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">][</span><span class="n">ntag</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">block_label</span><span class="p">,</span> <span class="s2">&quot;theme&quot;</span><span class="p">:</span> <span class="n">nth</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">ntag</span></div>
+
+
+
+<div class="viewcode-block" id="raw_delete_node">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.nodes.raw_delete_node">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">raw_delete_node</span><span class="p">(</span><span class="n">tid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">ntag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Delete a node and all its connected links from tab `tid`</span>
+<span class="sd">    without touching the undo stack.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">ntag</span><span class="p">):</span>
+        <span class="c1"># Resolve node&#39;s attribute item IDs to string aliases for comparison.</span>
+        <span class="c1"># dpg.get_item_children returns integer IDs; links store string aliases.</span>
+        <span class="n">raw_attrs</span>  <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_item_children</span><span class="p">(</span><span class="n">ntag</span><span class="p">,</span> <span class="n">slot</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">attr_aliases</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">attr_id</span> <span class="ow">in</span> <span class="n">raw_attrs</span><span class="p">:</span>
+            <span class="n">alias</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_item_alias</span><span class="p">(</span><span class="n">attr_id</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attr_id</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="n">attr_id</span>
+            <span class="k">if</span> <span class="n">alias</span><span class="p">:</span>
+                <span class="n">attr_aliases</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">alias</span><span class="p">)</span>
+            <span class="n">attr_aliases</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">attr_id</span><span class="p">))</span>  <span class="c1"># keep int-as-string as fallback</span>
+
+        <span class="k">for</span> <span class="n">link_tag</span><span class="p">,</span> <span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="n">a2</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;links&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="c1"># Normalise stored endpoints to strings for comparison</span>
+            <span class="n">s1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">a1</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="n">a1</span>
+            <span class="n">s2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">a2</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a2</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="n">a2</span>
+            <span class="k">if</span> <span class="n">s1</span> <span class="ow">in</span> <span class="n">attr_aliases</span> <span class="ow">or</span> <span class="n">s2</span> <span class="ow">in</span> <span class="n">attr_aliases</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">link_tag</span><span class="p">):</span>
+                    <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">link_tag</span><span class="p">)</span>
+                <span class="n">t</span><span class="p">[</span><span class="s2">&quot;links&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">link_tag</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">ntag</span><span class="p">)</span>
+    <span class="n">t</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ntag</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># Public (push undo first)</span>
+
+<div class="viewcode-block" id="spawn_node">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.nodes.spawn_node">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">spawn_node</span><span class="p">(</span><span class="n">block_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Spawn a node into the active tab, pushing an undo snapshot first.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.undo</span><span class="w">   </span><span class="kn">import</span> <span class="n">push_undo</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.tabs</span><span class="w">   </span><span class="kn">import</span> <span class="n">current_tab</span><span class="p">,</span> <span class="n">_remove_hint_node</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.statusbar</span><span class="w"> </span><span class="kn">import</span> <span class="n">refresh_status</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="n">current_tab</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">push_undo</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">)</span>
+    <span class="n">_remove_hint_node</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">)</span>
+    <span class="n">raw_spawn_node</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">,</span> <span class="n">block_label</span><span class="p">)</span>
+    <span class="n">refresh_status</span><span class="p">()</span>
+    <span class="n">_maybe_refresh_summary</span><span class="p">()</span>
+
+    <span class="c1"># Auto-fill shapes and propagate dimensions</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.autofill</span><span class="w"> </span><span class="kn">import</span> <span class="n">on_node_spawned</span>
+        <span class="n">on_node_spawned</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="delete_node">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.nodes.delete_node">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">delete_node</span><span class="p">(</span><span class="n">ntag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delete a single node from the active tab with undo.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.undo</span><span class="w"> </span><span class="kn">import</span> <span class="n">push_undo</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.statusbar</span><span class="w"> </span><span class="kn">import</span> <span class="n">refresh_status</span>
+
+    <span class="n">push_undo</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">)</span>
+    <span class="n">raw_delete_node</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">,</span> <span class="n">ntag</span><span class="p">)</span>
+    <span class="n">refresh_status</span><span class="p">()</span>
+    <span class="n">_maybe_refresh_summary</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="delete_selected_nodes">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.nodes.delete_selected_nodes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">delete_selected_nodes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delete all currently selected nodes in the active tab.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.undo</span><span class="w"> </span><span class="kn">import</span> <span class="n">push_undo</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.tabs</span><span class="w"> </span><span class="kn">import</span> <span class="n">current_tab</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.statusbar</span><span class="w"> </span><span class="kn">import</span> <span class="n">refresh_status</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="n">current_tab</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_selected_nodes</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;editor_tag&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">selected</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">push_undo</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">nid</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">:</span>
+        <span class="n">alias</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_item_alias</span><span class="p">(</span><span class="n">nid</span><span class="p">)</span>
+        <span class="n">raw_delete_node</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">,</span> <span class="n">alias</span> <span class="k">if</span> <span class="n">alias</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">nid</span><span class="p">))</span>
+    <span class="n">refresh_status</span><span class="p">()</span>
+    <span class="n">_maybe_refresh_summary</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="clear_canvas">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.nodes.clear_canvas">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">clear_canvas</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delete every node on the active tab&#39;s canvas.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.undo</span><span class="w"> </span><span class="kn">import</span> <span class="n">push_undo</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.tabs</span><span class="w"> </span><span class="kn">import</span> <span class="n">current_tab</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.statusbar</span><span class="w"> </span><span class="kn">import</span> <span class="n">refresh_status</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="n">current_tab</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">push_undo</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ntag</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="n">raw_delete_node</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">,</span> <span class="n">ntag</span><span class="p">)</span>
+    <span class="n">refresh_status</span><span class="p">()</span>
+    <span class="n">_maybe_refresh_summary</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_maybe_refresh_summary</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Refresh the model summary panel if the active tab is the Model tab.&quot;&quot;&quot;</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;role&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;model&quot;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.summary</span><span class="w"> </span><span class="kn">import</span> <span class="n">refresh_model_summary</span>
+            <span class="n">refresh_model_summary</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

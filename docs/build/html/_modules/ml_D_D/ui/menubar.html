@@ -1,0 +1,324 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.ui.menubar &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ml_D_D.ui.menubar</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ml_D_D.ui.menubar</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">ui/menubar.py</span>
+<span class="sd">Builds the DearPyGui viewport menu bar.</span>
+<span class="sd">All callbacks are imported from their respective logic modules.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dearpygui.dearpygui</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dpg</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ml_D_D.state</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">state</span>
+
+
+<div class="viewcode-block" id="build_menubar">
+<a class="viewcode-back" href="../../../ml_D_D.ui.html#ml_D_D.ui.menubar.build_menubar">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_menubar</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.nodes</span><span class="w">       </span><span class="kn">import</span> <span class="n">delete_selected_nodes</span><span class="p">,</span> <span class="n">clear_canvas</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.tabs</span><span class="w">        </span><span class="kn">import</span> <span class="n">new_tab</span><span class="p">,</span> <span class="n">close_tab</span><span class="p">,</span> <span class="n">open_assign_role_dialog</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.undo</span><span class="w">        </span><span class="kn">import</span> <span class="n">undo</span><span class="p">,</span> <span class="n">redo</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.training</span><span class="w">       </span><span class="kn">import</span> <span class="n">on_run</span><span class="p">,</span> <span class="n">on_pause</span><span class="p">,</span> <span class="n">on_stop</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.generator</span><span class="w">  </span><span class="kn">import</span> <span class="n">export_pytorch</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.filesystem.save</span><span class="w">   </span><span class="kn">import</span> <span class="n">save_current</span><span class="p">,</span> <span class="n">open_save_dialog</span><span class="p">,</span> <span class="n">open_load_dialog</span>
+
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">viewport_menu_bar</span><span class="p">():</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;ML D&amp;D&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;v1.0&quot;</span><span class="p">,</span>     <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+
+        <span class="c1"># File</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">menu</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;File&quot;</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Open...&quot;</span><span class="p">,</span>    <span class="n">callback</span><span class="o">=</span><span class="n">open_load_dialog</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Save&quot;</span><span class="p">,</span>       <span class="n">callback</span><span class="o">=</span><span class="n">save_current</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Save As...&quot;</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">open_save_dialog</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">menu</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Templates&quot;</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;MNIST Classifier&quot;</span><span class="p">,</span>
+                                  <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_load_template</span><span class="p">(</span><span class="s2">&quot;mnist_classifier.mlf&quot;</span><span class="p">))</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;CIFAR10 Classifier&quot;</span><span class="p">,</span>
+                                  <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_load_template</span><span class="p">(</span><span class="s2">&quot;cifar10_classifier.mlf&quot;</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">menu</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Export&quot;</span><span class="p">):</span>
+                <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">menu</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Python&quot;</span><span class="p">):</span>
+                    <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;PyTorch&quot;</span><span class="p">,</span>    <span class="n">callback</span><span class="o">=</span><span class="n">export_pytorch</span><span class="p">)</span>
+
+        <span class="c1"># Edit</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">menu</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Edit&quot;</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Undo&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;menu_undo&quot;</span><span class="p">,</span>
+                              <span class="n">callback</span><span class="o">=</span><span class="n">undo</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Redo&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;menu_redo&quot;</span><span class="p">,</span>
+                              <span class="n">callback</span><span class="o">=</span><span class="n">redo</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Delete Selected  [Del]&quot;</span><span class="p">,</span>
+                              <span class="n">callback</span><span class="o">=</span><span class="n">delete_selected_nodes</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Clear Canvas&quot;</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">clear_canvas</span><span class="p">)</span>
+
+        <span class="c1"># Graph</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">menu</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Graph&quot;</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;New Tab&quot;</span><span class="p">,</span>
+                              <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">new_tab</span><span class="p">())</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Close Tab&quot;</span><span class="p">,</span>
+                              <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">close_tab</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Assign Role...&quot;</span><span class="p">,</span>
+                              <span class="n">callback</span><span class="o">=</span><span class="n">open_assign_role_dialog</span><span class="p">)</span>
+
+        <span class="c1"># Run</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">menu</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Run&quot;</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Inference...&quot;</span><span class="p">,</span>
+                              <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="nb">__import__</span><span class="p">(</span><span class="s2">&quot;ml_D_D.engine.inference&quot;</span><span class="p">,</span> <span class="n">fromlist</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;open_inference_window&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">open_inference_window</span><span class="p">())</span>
+
+        <span class="c1"># Help</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">menu</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Help&quot;</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Documentation&quot;</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">_open_docs</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_menu_item</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;About ML Forge&quot;</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">_open_about</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+        <span class="c1"># Run controls</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;RUN&quot;</span><span class="p">,</span>     <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;btn_run&quot;</span><span class="p">,</span>   <span class="n">small</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">on_run</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;PAUSE&quot;</span><span class="p">,</span>   <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;btn_pause&quot;</span><span class="p">,</span> <span class="n">small</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                       <span class="n">callback</span><span class="o">=</span><span class="n">on_pause</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;STOP&quot;</span><span class="p">,</span>    <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;btn_stop&quot;</span><span class="p">,</span>  <span class="n">small</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                       <span class="n">callback</span><span class="o">=</span><span class="n">on_stop</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;METRICS&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;btn_metrics&quot;</span><span class="p">,</span> <span class="n">small</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                       <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="nb">__import__</span><span class="p">(</span><span class="s2">&quot;ml_D_D.engine.metrics&quot;</span><span class="p">,</span> <span class="n">fromlist</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;open_metrics_window&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">open_metrics_window</span><span class="p">())</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;VRAM:&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;mb_vram&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">60</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;CUDA:&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;mb_cuda&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_template</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a bundled template without overwriting state.current_file.&quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.filesystem.save</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_project</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.console</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">ml_D_D.state</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">state</span>
+
+    <span class="n">templates_dir</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;templates&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">templates_dir</span> <span class="o">/</span> <span class="n">filename</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Template not found: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">load_project</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">current_file</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">log</span><span class="p">(</span><span class="s2">&quot;Template loaded. Use File &gt; Save As to save your own copy.&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.statusbar</span><span class="w"> </span><span class="kn">import</span> <span class="n">refresh_status</span>
+    <span class="n">refresh_status</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_open_docs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="s2">&quot;docs_window&quot;</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+
+    <span class="n">vw</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_viewport_client_width</span><span class="p">()</span>
+    <span class="n">vh</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_viewport_client_height</span><span class="p">()</span>
+    <span class="n">ww</span><span class="p">,</span> <span class="n">wh</span> <span class="o">=</span> <span class="mi">560</span><span class="p">,</span> <span class="mi">520</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">window</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Documentation&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                    <span class="n">width</span><span class="o">=</span><span class="n">ww</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">wh</span><span class="p">,</span>
+                    <span class="n">pos</span><span class="o">=</span><span class="p">((</span><span class="n">vw</span><span class="o">-</span><span class="n">ww</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">vh</span><span class="o">-</span><span class="n">wh</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">),</span>
+                    <span class="n">no_collapse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;ML D&amp;D - Quick Reference&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Getting Started&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;1. Data Prep tab - build your dataset and transform chain&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;   Add a Dataset node (MNIST, CIFAR10, etc.)&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;   Chain transforms: ToTensor, Normalize, augmentations&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;   End with DataLoader (train) and optionally DataLoader (val)&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;2. Model tab - build your neural network&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;   Start with Input, end with Output&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;   Chain layers: Linear, Conv2D, ReLU, BatchNorm2D, etc.&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;3. Training tab - configure training&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;   Connect DataLoaderBlock -&gt; ModelBlock -&gt; Loss -&gt; Optimizer&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;   Configure epochs, device, checkpointing in the right panel&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;   Press RUN in the menubar to start training&quot;</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Keyboard Shortcuts&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Del          Delete selected nodes&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Ctrl+Drag    Pan the canvas&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Middle-drag  Pan the canvas (built-in)&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Ctrl+S       Save project&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Ctrl+Z       Undo&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Ctrl+Y       Redo&quot;</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Training Tab Wiring&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Add these nodes from the palette (Training section):&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;  ModelBlock, DataLoaderBlock, a Loss, and an Optimizer&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Required connections:&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;  DataLoaderBlock.images  -&gt; ModelBlock.images&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;  ModelBlock.predictions  -&gt; Loss.pred&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;  DataLoaderBlock.labels  -&gt; Loss.target&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;  Loss.loss               -&gt; Optimizer.params&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;RUN will fail validation if any of these are missing.&quot;</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Datasets&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Supported: MNIST, CIFAR10, CIFAR100, FashionMNIST, ImageFolder&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Set root to a local folder. Enable download=True on first run.&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Use two Dataset nodes (train=True and train=False) with&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;DataLoader (train) and DataLoader (val) for proper splits.&quot;</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Checkpoints&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Checkpoints are saved to the Save Dir in Training Config.&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;best.pth  - best validation checkpoint&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;final.pth - checkpoint at end of training&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Use File &gt; Run &gt; Inference to test a saved checkpoint.&quot;</span><span class="p">)</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Close&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                       <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_open_about</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="s2">&quot;about_window&quot;</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+
+    <span class="n">vw</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_viewport_client_width</span><span class="p">()</span>
+    <span class="n">vh</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_viewport_client_height</span><span class="p">()</span>
+    <span class="n">ww</span><span class="p">,</span> <span class="n">wh</span> <span class="o">=</span> <span class="mi">380</span><span class="p">,</span> <span class="mi">280</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">window</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;About ML Forge&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                    <span class="n">width</span><span class="o">=</span><span class="n">ww</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">wh</span><span class="p">,</span>
+                    <span class="n">pos</span><span class="o">=</span><span class="p">((</span><span class="n">vw</span><span class="o">-</span><span class="n">ww</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">vh</span><span class="o">-</span><span class="n">wh</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">),</span>
+                    <span class="n">no_collapse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_resize</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;ML Forge&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Version 1.0&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;A visual PyTorch pipeline editor.&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Build, train and run ML models without writing code.&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Built with:&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;  DearPyGui  - UI framework&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;  PyTorch    - Training engine&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;  torchvision - Datasets and transforms&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Templates included:&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;  MNIST Classifier&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;  CIFAR10 Classifier&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Close&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                       <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,313 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.ui package &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">ml_D_D.ui package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ml_D_D.ui.console">ml_D_D.ui.console module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.ui.console.clear_console"><code class="docutils literal notranslate"><span class="pre">clear_console()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.ui.console.log"><code class="docutils literal notranslate"><span class="pre">log()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.ui.layout">ml_D_D.ui.layout module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.ui.layout.build_main_window"><code class="docutils literal notranslate"><span class="pre">build_main_window()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.ui.menubar">ml_D_D.ui.menubar module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.ui.menubar.build_menubar"><code class="docutils literal notranslate"><span class="pre">build_menubar()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.ui.palette">ml_D_D.ui.palette module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.ui.palette.on_search"><code class="docutils literal notranslate"><span class="pre">on_search()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.ui.palette.rebuild_palette"><code class="docutils literal notranslate"><span class="pre">rebuild_palette()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.ui.resize">ml_D_D.ui.resize module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.ui.resize.resize_callback"><code class="docutils literal notranslate"><span class="pre">resize_callback()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.ui.statusbar">ml_D_D.ui.statusbar module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.ui.statusbar.refresh_status"><code class="docutils literal notranslate"><span class="pre">refresh_status()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.ui.summary">ml_D_D.ui.summary module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.ui.summary.refresh_model_summary"><code class="docutils literal notranslate"><span class="pre">refresh_model_summary()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.ui.toolbar">ml_D_D.ui.toolbar module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.ui.toolbar.build_toolbar"><code class="docutils literal notranslate"><span class="pre">build_toolbar()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.ui.training">ml_D_D.ui.training module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.ui.training.apply_train_btn_style"><code class="docutils literal notranslate"><span class="pre">apply_train_btn_style()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.ui.training.clear_highlights"><code class="docutils literal notranslate"><span class="pre">clear_highlights()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.ui.training.highlight_issues"><code class="docutils literal notranslate"><span class="pre">highlight_issues()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.ui.training.on_pause"><code class="docutils literal notranslate"><span class="pre">on_pause()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.ui.training.on_run"><code class="docutils literal notranslate"><span class="pre">on_run()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.ui.training.on_stop"><code class="docutils literal notranslate"><span class="pre">on_stop()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.ui.training.tick_training"><code class="docutils literal notranslate"><span class="pre">tick_training()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.ui.training.update_cuda_stats"><code class="docutils literal notranslate"><span class="pre">update_cuda_stats()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.ui.training.update_status_indicator"><code class="docutils literal notranslate"><span class="pre">update_status_indicator()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.ui">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ml_D_D.ui package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/ml_D_D.ui.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ml-d-d-ui-package">
+<h1>ml_D_D.ui package<a class="headerlink" href="#ml-d-d-ui-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-ml_D_D.ui.console">
+<span id="ml-d-d-ui-console-module"></span><h2>ml_D_D.ui.console module<a class="headerlink" href="#module-ml_D_D.ui.console" title="Link to this heading"></a></h2>
+<p>ui/console.py
+Console log helper functions.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.console.clear_console">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.console.</span></span><span class="sig-name descname"><span class="pre">clear_console</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/console.html#clear_console"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.console.clear_console" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.console.log">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.console.</span></span><span class="sig-name descname"><span class="pre">log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'info'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/console.html#log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.console.log" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.ui.layout">
+<span id="ml-d-d-ui-layout-module"></span><h2>ml_D_D.ui.layout module<a class="headerlink" href="#module-ml_D_D.ui.layout" title="Link to this heading"></a></h2>
+<p>ui/layout.py
+Builds the main DearPyGui window and all child panels:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Block palette (left)</p></li>
+<li><p>Canvas tab bar (centre)</p></li>
+<li><p>Training config + plots (right)</p></li>
+<li><p>Console log (bottom)</p></li>
+<li><p>Status bar (bottom edge)</p></li>
+</ul>
+</div></blockquote>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.layout.build_main_window">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.layout.</span></span><span class="sig-name descname"><span class="pre">build_main_window</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/layout.html#build_main_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.layout.build_main_window" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.ui.menubar">
+<span id="ml-d-d-ui-menubar-module"></span><h2>ml_D_D.ui.menubar module<a class="headerlink" href="#module-ml_D_D.ui.menubar" title="Link to this heading"></a></h2>
+<p>ui/menubar.py
+Builds the DearPyGui viewport menu bar.
+All callbacks are imported from their respective logic modules.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.menubar.build_menubar">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.menubar.</span></span><span class="sig-name descname"><span class="pre">build_menubar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/menubar.html#build_menubar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.menubar.build_menubar" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.ui.palette">
+<span id="ml-d-d-ui-palette-module"></span><h2>ml_D_D.ui.palette module<a class="headerlink" href="#module-ml_D_D.ui.palette" title="Link to this heading"></a></h2>
+<p>ui/palette.py
+Block palette panel: search filtering and button rebuild.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.palette.on_search">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.palette.</span></span><span class="sig-name descname"><span class="pre">on_search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sender</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/palette.html#on_search"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.palette.on_search" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.palette.rebuild_palette">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.palette.</span></span><span class="sig-name descname"><span class="pre">rebuild_palette</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/palette.html#rebuild_palette"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.palette.rebuild_palette" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.ui.resize">
+<span id="ml-d-d-ui-resize-module"></span><h2>ml_D_D.ui.resize module<a class="headerlink" href="#module-ml_D_D.ui.resize" title="Link to this heading"></a></h2>
+<p>ui/resize.py
+Viewport resize callback.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.resize.resize_callback">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.resize.</span></span><span class="sig-name descname"><span class="pre">resize_callback</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/resize.html#resize_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.resize.resize_callback" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.ui.statusbar">
+<span id="ml-d-d-ui-statusbar-module"></span><h2>ml_D_D.ui.statusbar module<a class="headerlink" href="#module-ml_D_D.ui.statusbar" title="Link to this heading"></a></h2>
+<p>ui/statusbar.py
+refresh_status() is called by nodes, tabs, and undo whenever the
+node/link counts or undo stack depths change.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.statusbar.refresh_status">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.statusbar.</span></span><span class="sig-name descname"><span class="pre">refresh_status</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/statusbar.html#refresh_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.statusbar.refresh_status" title="Link to this definition"></a></dt>
+<dd><p>Update node/link counts, undo depth, window title, and footer project name.</p>
+</dd></dl>
+
+</section>
+<section id="module-ml_D_D.ui.summary">
+<span id="ml-d-d-ui-summary-module"></span><h2>ml_D_D.ui.summary module<a class="headerlink" href="#module-ml_D_D.ui.summary" title="Link to this heading"></a></h2>
+<p>ui/summary.py
+Model summary panel.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.summary.refresh_model_summary">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.summary.</span></span><span class="sig-name descname"><span class="pre">refresh_model_summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/summary.html#refresh_model_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.summary.refresh_model_summary" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.ui.toolbar">
+<span id="ml-d-d-ui-toolbar-module"></span><h2>ml_D_D.ui.toolbar module<a class="headerlink" href="#module-ml_D_D.ui.toolbar" title="Link to this heading"></a></h2>
+<p>ui/toolbar.py
+The thin toolbar strip that sits above the canvas panel.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.toolbar.build_toolbar">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.toolbar.</span></span><span class="sig-name descname"><span class="pre">build_toolbar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/toolbar.html#build_toolbar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.toolbar.build_toolbar" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.ui.training">
+<span id="ml-d-d-ui-training-module"></span><h2>ml_D_D.ui.training module<a class="headerlink" href="#module-ml_D_D.ui.training" title="Link to this heading"></a></h2>
+<p>ui/training.py
+Training state machine: on_run(), on_pause(), on_stop(), per-frame tick,
+node highlighting, and CUDA/VRAM menubar stats.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.training.apply_train_btn_style">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.training.</span></span><span class="sig-name descname"><span class="pre">apply_train_btn_style</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/training.html#apply_train_btn_style"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.training.apply_train_btn_style" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.training.clear_highlights">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.training.</span></span><span class="sig-name descname"><span class="pre">clear_highlights</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/training.html#clear_highlights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.training.clear_highlights" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.training.highlight_issues">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.training.</span></span><span class="sig-name descname"><span class="pre">highlight_issues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issues</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/training.html#highlight_issues"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.training.highlight_issues" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.training.on_pause">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.training.</span></span><span class="sig-name descname"><span class="pre">on_pause</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/training.html#on_pause"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.training.on_pause" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.training.on_run">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.training.</span></span><span class="sig-name descname"><span class="pre">on_run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/training.html#on_run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.training.on_run" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.training.on_stop">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.training.</span></span><span class="sig-name descname"><span class="pre">on_stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/training.html#on_stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.training.on_stop" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.training.tick_training">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.training.</span></span><span class="sig-name descname"><span class="pre">tick_training</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/training.html#tick_training"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.training.tick_training" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.training.update_cuda_stats">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.training.</span></span><span class="sig-name descname"><span class="pre">update_cuda_stats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/training.html#update_cuda_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.training.update_cuda_stats" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.ui.training.update_status_indicator">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.ui.training.</span></span><span class="sig-name descname"><span class="pre">update_status_indicator</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/ui/training.html#update_status_indicator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.ui.training.update_status_indicator" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.ui">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ml_D_D.ui" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

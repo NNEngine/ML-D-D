@@ -1,0 +1,421 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.graph package &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">ml_D_D.graph package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ml_D_D.graph.links">ml_D_D.graph.links module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.graph.links.delink_callback"><code class="docutils literal notranslate"><span class="pre">delink_callback()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.links.link_callback"><code class="docutils literal notranslate"><span class="pre">link_callback()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.graph.nodes">ml_D_D.graph.nodes module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.graph.nodes.attr_in_tag"><code class="docutils literal notranslate"><span class="pre">attr_in_tag()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.nodes.attr_out_tag"><code class="docutils literal notranslate"><span class="pre">attr_out_tag()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.nodes.attr_param_tag"><code class="docutils literal notranslate"><span class="pre">attr_param_tag()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.nodes.clear_canvas"><code class="docutils literal notranslate"><span class="pre">clear_canvas()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.nodes.delete_node"><code class="docutils literal notranslate"><span class="pre">delete_node()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.nodes.delete_selected_nodes"><code class="docutils literal notranslate"><span class="pre">delete_selected_nodes()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.nodes.input_field_tag"><code class="docutils literal notranslate"><span class="pre">input_field_tag()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.nodes.node_tag"><code class="docutils literal notranslate"><span class="pre">node_tag()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.nodes.raw_delete_node"><code class="docutils literal notranslate"><span class="pre">raw_delete_node()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.nodes.raw_spawn_node"><code class="docutils literal notranslate"><span class="pre">raw_spawn_node()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.nodes.spawn_node"><code class="docutils literal notranslate"><span class="pre">spawn_node()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.graph.pipeline">ml_D_D.graph.pipeline module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.graph.pipeline.get_stage_statuses"><code class="docutils literal notranslate"><span class="pre">get_stage_statuses()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.pipeline.pipeline_ready"><code class="docutils literal notranslate"><span class="pre">pipeline_ready()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.pipeline.refresh_pipeline_bar"><code class="docutils literal notranslate"><span class="pre">refresh_pipeline_bar()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.graph.tabs">ml_D_D.graph.tabs module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.graph.tabs.assign_role"><code class="docutils literal notranslate"><span class="pre">assign_role()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.tabs.close_tab"><code class="docutils literal notranslate"><span class="pre">close_tab()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.tabs.current_tab"><code class="docutils literal notranslate"><span class="pre">current_tab()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.tabs.editor_tag"><code class="docutils literal notranslate"><span class="pre">editor_tag()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.tabs.new_tab"><code class="docutils literal notranslate"><span class="pre">new_tab()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.tabs.on_tab_change"><code class="docutils literal notranslate"><span class="pre">on_tab_change()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.tabs.open_assign_role_dialog"><code class="docutils literal notranslate"><span class="pre">open_assign_role_dialog()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.tabs.rename_tab"><code class="docutils literal notranslate"><span class="pre">rename_tab()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.tabs.sync_active_tab"><code class="docutils literal notranslate"><span class="pre">sync_active_tab()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.tabs.tab_tag"><code class="docutils literal notranslate"><span class="pre">tab_tag()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.graph.undo">ml_D_D.graph.undo module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.graph.undo.push_undo"><code class="docutils literal notranslate"><span class="pre">push_undo()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.undo.redo"><code class="docutils literal notranslate"><span class="pre">redo()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.undo.refresh_undo_menu"><code class="docutils literal notranslate"><span class="pre">refresh_undo_menu()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.graph.undo.undo"><code class="docutils literal notranslate"><span class="pre">undo()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.graph">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ml_D_D.graph package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/ml_D_D.graph.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ml-d-d-graph-package">
+<h1>ml_D_D.graph package<a class="headerlink" href="#ml-d-d-graph-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-ml_D_D.graph.links">
+<span id="ml-d-d-graph-links-module"></span><h2>ml_D_D.graph.links module<a class="headerlink" href="#module-ml_D_D.graph.links" title="Link to this heading"></a></h2>
+<p>graph/links.py
+DearPyGui node-editor link and delink callbacks.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.links.delink_callback">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.links.</span></span><span class="sig-name descname"><span class="pre">delink_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sender</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/links.html#delink_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.links.delink_callback" title="Link to this definition"></a></dt>
+<dd><p>Handle removal of an existing link in the DearPyGui node editor.</p>
+<p>This callback is triggered when the user deletes a connection between nodes.
+It performs the following operations:
+- Retrieves the currently active tab and its graph state.
+- Pushes the current state to the undo stack for rollback support.
+- Deletes the visual link from the node editor (if it exists).
+- Removes the corresponding link entry from the tab’s internal state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sender</strong> – The DearPyGui node editor widget that triggered the callback.</p></li>
+<li><p><strong>app_data</strong> – The unique tag/identifier of the link to be removed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.links.link_callback">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.links.</span></span><span class="sig-name descname"><span class="pre">link_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sender</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/links.html#link_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.links.link_callback" title="Link to this definition"></a></dt>
+<dd><p>Handle creation of a new link between two node attributes in the DearPyGui node editor.</p>
+<p>This callback is triggered when the user connects two node pins. It performs
+the following operations:
+- Retrieves the currently active tab and its graph state.
+- Pushes the current state to the undo stack for rollback support.
+- Generates a unique link tag and creates the visual link in the node editor.
+- Stores the link mapping (source → destination) in the tab’s state.
+- Normalizes attribute identifiers (handles both integer IDs and string aliases).
+- Attempts to auto-propagate dimension information and validate compatibility</p>
+<blockquote>
+<div><p>between connected nodes using the autofill engine.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sender</strong> – The DearPyGui node editor widget that triggered the callback.</p></li>
+<li><p><strong>app_data</strong> – A tuple/list containing the source and destination attribute IDs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-ml_D_D.graph.nodes">
+<span id="ml-d-d-graph-nodes-module"></span><h2>ml_D_D.graph.nodes module<a class="headerlink" href="#module-ml_D_D.graph.nodes" title="Link to this heading"></a></h2>
+<p>nodes.py
+Node spawn and delete operations, both raw (no undo) and public (with undo).</p>
+<p>Raw variants are used internally by the undo/redo snapshot system.
+Public variants are called from the UI and always push an undo snapshot first.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.nodes.attr_in_tag">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.nodes.</span></span><span class="sig-name descname"><span class="pre">attr_in_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/nodes.html#attr_in_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.nodes.attr_in_tag" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.nodes.attr_out_tag">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.nodes.</span></span><span class="sig-name descname"><span class="pre">attr_out_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/nodes.html#attr_out_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.nodes.attr_out_tag" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.nodes.attr_param_tag">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.nodes.</span></span><span class="sig-name descname"><span class="pre">attr_param_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/nodes.html#attr_param_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.nodes.attr_param_tag" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.nodes.clear_canvas">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.nodes.</span></span><span class="sig-name descname"><span class="pre">clear_canvas</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/nodes.html#clear_canvas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.nodes.clear_canvas" title="Link to this definition"></a></dt>
+<dd><p>Delete every node on the active tab’s canvas.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.nodes.delete_node">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.nodes.</span></span><span class="sig-name descname"><span class="pre">delete_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ntag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/nodes.html#delete_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.nodes.delete_node" title="Link to this definition"></a></dt>
+<dd><p>Delete a single node from the active tab with undo.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.nodes.delete_selected_nodes">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.nodes.</span></span><span class="sig-name descname"><span class="pre">delete_selected_nodes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/nodes.html#delete_selected_nodes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.nodes.delete_selected_nodes" title="Link to this definition"></a></dt>
+<dd><p>Delete all currently selected nodes in the active tab.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.nodes.input_field_tag">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.nodes.</span></span><span class="sig-name descname"><span class="pre">input_field_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/nodes.html#input_field_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.nodes.input_field_tag" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.nodes.node_tag">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.nodes.</span></span><span class="sig-name descname"><span class="pre">node_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/nodes.html#node_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.nodes.node_tag" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.nodes.raw_delete_node">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.nodes.</span></span><span class="sig-name descname"><span class="pre">raw_delete_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/nodes.html#raw_delete_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.nodes.raw_delete_node" title="Link to this definition"></a></dt>
+<dd><p>Delete a node and all its connected links from tab <cite>tid</cite>
+without touching the undo stack.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.nodes.raw_spawn_node">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.nodes.</span></span><span class="sig-name descname"><span class="pre">raw_spawn_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/nodes.html#raw_spawn_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.nodes.raw_spawn_node" title="Link to this definition"></a></dt>
+<dd><p>Spawn a node directly into tab <cite>tid</cite> without touching the undo stack.
+Used by snapshot restore, persistence load, and the public spawn_node() wrapper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tid</strong> – target tab id</p></li>
+<li><p><strong>block_label</strong> – block type name</p></li>
+<li><p><strong>nid</strong> – force a specific node id (used by undo/load)</p></li>
+<li><p><strong>pos</strong> – (x, y) canvas position; auto-grid if None</p></li>
+<li><p><strong>params</strong> – dict of param_name -&gt; value to pre-fill fields</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns the node_tag on success, None if block_label is unknown.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.nodes.spawn_node">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.nodes.</span></span><span class="sig-name descname"><span class="pre">spawn_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/nodes.html#spawn_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.nodes.spawn_node" title="Link to this definition"></a></dt>
+<dd><p>Spawn a node into the active tab, pushing an undo snapshot first.</p>
+</dd></dl>
+
+</section>
+<section id="module-ml_D_D.graph.pipeline">
+<span id="ml-d-d-graph-pipeline-module"></span><h2>ml_D_D.graph.pipeline module<a class="headerlink" href="#module-ml_D_D.graph.pipeline" title="Link to this heading"></a></h2>
+<p>graph/pipeline.py
+Pipeline stage definitions and completion detection.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.pipeline.get_stage_statuses">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.pipeline.</span></span><span class="sig-name descname"><span class="pre">get_stage_statuses</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/pipeline.html#get_stage_statuses"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.pipeline.get_stage_statuses" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.pipeline.pipeline_ready">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.pipeline.</span></span><span class="sig-name descname"><span class="pre">pipeline_ready</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/pipeline.html#pipeline_ready"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.pipeline.pipeline_ready" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.pipeline.refresh_pipeline_bar">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.pipeline.</span></span><span class="sig-name descname"><span class="pre">refresh_pipeline_bar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/pipeline.html#refresh_pipeline_bar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.pipeline.refresh_pipeline_bar" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.graph.tabs">
+<span id="ml-d-d-graph-tabs-module"></span><h2>ml_D_D.graph.tabs module<a class="headerlink" href="#module-ml_D_D.graph.tabs" title="Link to this heading"></a></h2>
+<p>tabs.py
+Tab lifecycle management; creation, closure, renaming, and the
+active-tab sync that runs every frame in the render loop.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.tabs.assign_role">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.tabs.</span></span><span class="sig-name descname"><span class="pre">assign_role</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">role</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/tabs.html#assign_role"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.tabs.assign_role" title="Link to this definition"></a></dt>
+<dd><p>Assign or clear the pipeline role for tab <cite>tid</cite>.
+Updates the tab header colour and refreshes the pipeline bar.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.tabs.close_tab">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.tabs.</span></span><span class="sig-name descname"><span class="pre">close_tab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/tabs.html#close_tab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.tabs.close_tab" title="Link to this definition"></a></dt>
+<dd><p>Close tab <cite>tid</cite>, cleaning up all its nodes and DearPyGui items.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.tabs.current_tab">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.tabs.</span></span><span class="sig-name descname"><span class="pre">current_tab</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/tabs.html#current_tab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.tabs.current_tab" title="Link to this definition"></a></dt>
+<dd><p>Return the dict for the currently active tab, or None.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.tabs.editor_tag">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.tabs.</span></span><span class="sig-name descname"><span class="pre">editor_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/tabs.html#editor_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.tabs.editor_tag" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.tabs.new_tab">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.tabs.</span></span><span class="sig-name descname"><span class="pre">new_tab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">role</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/tabs.html#new_tab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.tabs.new_tab" title="Link to this definition"></a></dt>
+<dd><p>Create a new tab, add it to the tab bar, and make it active.
+role: “data_prep” | “model” | “training” | None
+Returns the new tab id.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.tabs.on_tab_change">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.tabs.</span></span><span class="sig-name descname"><span class="pre">on_tab_change</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sender</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/tabs.html#on_tab_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.tabs.on_tab_change" title="Link to this definition"></a></dt>
+<dd><p>DearPyGui callback - fires when user clicks a tab.
+app_data is the integer item ID of the newly selected tab.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.tabs.open_assign_role_dialog">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.tabs.</span></span><span class="sig-name descname"><span class="pre">open_assign_role_dialog</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/tabs.html#open_assign_role_dialog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.tabs.open_assign_role_dialog" title="Link to this definition"></a></dt>
+<dd><p>Show a popup to assign a pipeline role to the active tab.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.tabs.rename_tab">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.tabs.</span></span><span class="sig-name descname"><span class="pre">rename_tab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/tabs.html#rename_tab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.tabs.rename_tab" title="Link to this definition"></a></dt>
+<dd><p>Rename a tab both in state and in the DearPyGui label.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.tabs.sync_active_tab">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.tabs.</span></span><span class="sig-name descname"><span class="pre">sync_active_tab</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/tabs.html#sync_active_tab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.tabs.sync_active_tab" title="Link to this definition"></a></dt>
+<dd><p>Poll the tab bar every frame to keep state.active_tab_id in sync
+with whichever tab the user has clicked on.</p>
+<p>dpg.get_value() on a tab_bar returns the internal integer ID of the
+selected tab item - so we resolve each tab’s tag to its item ID
+via dpg.get_alias_id() before comparing.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.tabs.tab_tag">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.tabs.</span></span><span class="sig-name descname"><span class="pre">tab_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/tabs.html#tab_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.tabs.tab_tag" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.graph.undo">
+<span id="ml-d-d-graph-undo-module"></span><h2>ml_D_D.graph.undo module<a class="headerlink" href="#module-ml_D_D.graph.undo" title="Link to this heading"></a></h2>
+<p>undo.py
+Per-tab undo / redo stack using snapshots of node and link state.</p>
+<p>Snapshots capture: block label, canvas position, and all param values.
+This means undo/redo fully restores a node including everything typed into it.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.undo.push_undo">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.undo.</span></span><span class="sig-name descname"><span class="pre">push_undo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/undo.html#push_undo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.undo.push_undo" title="Link to this definition"></a></dt>
+<dd><p>Save a snapshot of tab <cite>tid</cite> onto its undo stack and clear its redo stack.
+Call this BEFORE any destructive operation.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.undo.redo">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.undo.</span></span><span class="sig-name descname"><span class="pre">redo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/undo.html#redo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.undo.redo" title="Link to this definition"></a></dt>
+<dd><p>Redo the last undone operation on the active tab.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.undo.refresh_undo_menu">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.undo.</span></span><span class="sig-name descname"><span class="pre">refresh_undo_menu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/undo.html#refresh_undo_menu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.undo.refresh_undo_menu" title="Link to this definition"></a></dt>
+<dd><p>Grey out / enable the Edit &gt; Undo and Edit &gt; Redo menu items.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.graph.undo.undo">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.graph.undo.</span></span><span class="sig-name descname"><span class="pre">undo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/graph/undo.html#undo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.graph.undo.undo" title="Link to this definition"></a></dt>
+<dd><p>Undo the last operation on the active tab.</p>
+</dd></dl>
+
+</section>
+<section id="module-ml_D_D.graph">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ml_D_D.graph" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

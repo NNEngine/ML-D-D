@@ -1,0 +1,519 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.engine package &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">ml_D_D.engine package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ml_D_D.engine.autofill">ml_D_D.engine.autofill module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.engine.autofill.check_dimension_mismatches"><code class="docutils literal notranslate"><span class="pre">check_dimension_mismatches()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.autofill.infer_from_dataset"><code class="docutils literal notranslate"><span class="pre">infer_from_dataset()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.autofill.on_dataset_changed"><code class="docutils literal notranslate"><span class="pre">on_dataset_changed()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.autofill.on_link_made"><code class="docutils literal notranslate"><span class="pre">on_link_made()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.autofill.on_node_spawned"><code class="docutils literal notranslate"><span class="pre">on_node_spawned()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.autofill.on_param_changed"><code class="docutils literal notranslate"><span class="pre">on_param_changed()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.autofill.propagate_all"><code class="docutils literal notranslate"><span class="pre">propagate_all()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.autofill.propagate_from_link"><code class="docutils literal notranslate"><span class="pre">propagate_from_link()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.engine.blocks">ml_D_D.engine.blocks module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.engine.blocks.all_block_labels"><code class="docutils literal notranslate"><span class="pre">all_block_labels()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.blocks.get_block_def"><code class="docutils literal notranslate"><span class="pre">get_block_def()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.engine.generator">ml_D_D.engine.generator module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.engine.generator.export_pytorch"><code class="docutils literal notranslate"><span class="pre">export_pytorch()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.generator.generate_pytorch"><code class="docutils literal notranslate"><span class="pre">generate_pytorch()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.engine.graph">ml_D_D.engine.graph module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.CycleError"><code class="docutils literal notranslate"><span class="pre">CycleError</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.GraphNode"><code class="docutils literal notranslate"><span class="pre">GraphNode</span></code></a><ul>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.GraphNode.block_label"><code class="docutils literal notranslate"><span class="pre">GraphNode.block_label</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.GraphNode.connected_inputs"><code class="docutils literal notranslate"><span class="pre">GraphNode.connected_inputs</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.GraphNode.connected_outputs"><code class="docutils literal notranslate"><span class="pre">GraphNode.connected_outputs</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.GraphNode.inputs"><code class="docutils literal notranslate"><span class="pre">GraphNode.inputs</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.GraphNode.ntag"><code class="docutils literal notranslate"><span class="pre">GraphNode.ntag</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.GraphNode.outputs"><code class="docutils literal notranslate"><span class="pre">GraphNode.outputs</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.GraphNode.params"><code class="docutils literal notranslate"><span class="pre">GraphNode.params</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.Issue"><code class="docutils literal notranslate"><span class="pre">Issue</span></code></a><ul>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.Issue.message"><code class="docutils literal notranslate"><span class="pre">Issue.message</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.Issue.ntag"><code class="docutils literal notranslate"><span class="pre">Issue.ntag</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.Issue.severity"><code class="docutils literal notranslate"><span class="pre">Issue.severity</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.ValidationResult"><code class="docutils literal notranslate"><span class="pre">ValidationResult</span></code></a><ul>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.ValidationResult.add_error"><code class="docutils literal notranslate"><span class="pre">ValidationResult.add_error()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.ValidationResult.add_warning"><code class="docutils literal notranslate"><span class="pre">ValidationResult.add_warning()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.ValidationResult.errors"><code class="docutils literal notranslate"><span class="pre">ValidationResult.errors</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.ValidationResult.issues"><code class="docutils literal notranslate"><span class="pre">ValidationResult.issues</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.ValidationResult.ok"><code class="docutils literal notranslate"><span class="pre">ValidationResult.ok</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.ValidationResult.warnings"><code class="docutils literal notranslate"><span class="pre">ValidationResult.warnings</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.build_graph"><code class="docutils literal notranslate"><span class="pre">build_graph()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.get_tab_by_role"><code class="docutils literal notranslate"><span class="pre">get_tab_by_role()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.topological_sort"><code class="docutils literal notranslate"><span class="pre">topological_sort()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.graph.validate_pipeline"><code class="docutils literal notranslate"><span class="pre">validate_pipeline()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.engine.inference">ml_D_D.engine.inference module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.engine.inference.open_inference_window"><code class="docutils literal notranslate"><span class="pre">open_inference_window()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.engine.metrics">ml_D_D.engine.metrics module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.engine.metrics.open_metrics_window"><code class="docutils literal notranslate"><span class="pre">open_metrics_window()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-ml_D_D.engine.run">ml_D_D.engine.run module</a><ul>
+<li><a class="reference internal" href="#ml_D_D.engine.run.drain_result_queue"><code class="docutils literal notranslate"><span class="pre">drain_result_queue()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.run.is_paused"><code class="docutils literal notranslate"><span class="pre">is_paused()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.run.pause_training"><code class="docutils literal notranslate"><span class="pre">pause_training()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.run.start_training"><code class="docutils literal notranslate"><span class="pre">start_training()</span></code></a></li>
+<li><a class="reference internal" href="#ml_D_D.engine.run.stop_training"><code class="docutils literal notranslate"><span class="pre">stop_training()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ml-d-d-engine-training-setup-module">ml_D_D.engine.training_setup module</a></li>
+<li><a class="reference internal" href="#module-ml_D_D.engine">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ml_D_D.engine package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/ml_D_D.engine.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ml-d-d-engine-package">
+<h1>ml_D_D.engine package<a class="headerlink" href="#ml-d-d-engine-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-ml_D_D.engine.autofill">
+<span id="ml-d-d-engine-autofill-module"></span><h2>ml_D_D.engine.autofill module<a class="headerlink" href="#module-ml_D_D.engine.autofill" title="Link to this heading"></a></h2>
+<p>engine/autofill.py
+Auto-fill and shape inference for the node editor.</p>
+<dl class="simple">
+<dt>Features:</dt><dd><p>Dataset -&gt; Input/Output shape inference
+Channel / feature propagation (Linear, Conv2D)
+Flatten -&gt; Linear in_features calculation
+Inline dimension mismatch warnings</p>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.autofill.check_dimension_mismatches">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.autofill.</span></span><span class="sig-name descname"><span class="pre">check_dimension_mismatches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/autofill.html#check_dimension_mismatches"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.autofill.check_dimension_mismatches" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.autofill.infer_from_dataset">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.autofill.</span></span><span class="sig-name descname"><span class="pre">infer_from_dataset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/autofill.html#infer_from_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.autofill.infer_from_dataset" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.autofill.on_dataset_changed">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.autofill.</span></span><span class="sig-name descname"><span class="pre">on_dataset_changed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/autofill.html#on_dataset_changed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.autofill.on_dataset_changed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.autofill.on_link_made">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.autofill.</span></span><span class="sig-name descname"><span class="pre">on_link_made</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src_ntag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst_ntag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/autofill.html#on_link_made"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.autofill.on_link_made" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.autofill.on_node_spawned">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.autofill.</span></span><span class="sig-name descname"><span class="pre">on_node_spawned</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/autofill.html#on_node_spawned"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.autofill.on_node_spawned" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.autofill.on_param_changed">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.autofill.</span></span><span class="sig-name descname"><span class="pre">on_param_changed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/autofill.html#on_param_changed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.autofill.on_param_changed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.autofill.propagate_all">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.autofill.</span></span><span class="sig-name descname"><span class="pre">propagate_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/autofill.html#propagate_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.autofill.propagate_all" title="Link to this definition"></a></dt>
+<dd><p>Walk the model graph and:
+Propagate out_channels/out_features to downstream in_channels/in_features
+Calculate Flatten output size and fill the next Linear’s in_features</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.autofill.propagate_from_link">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.autofill.</span></span><span class="sig-name descname"><span class="pre">propagate_from_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src_ntag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst_ntag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/autofill.html#propagate_from_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.autofill.propagate_from_link" title="Link to this definition"></a></dt>
+<dd><p>Quick propagation on a single new link.</p>
+</dd></dl>
+
+</section>
+<section id="module-ml_D_D.engine.blocks">
+<span id="ml-d-d-engine-blocks-module"></span><h2>ml_D_D.engine.blocks module<a class="headerlink" href="#module-ml_D_D.engine.blocks" title="Link to this heading"></a></h2>
+<p>blocks.py
+Block (node type) definitions and lookup helpers.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.blocks.all_block_labels">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.blocks.</span></span><span class="sig-name descname"><span class="pre">all_block_labels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/blocks.html#all_block_labels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.blocks.all_block_labels" title="Link to this definition"></a></dt>
+<dd><p>Return a flat list of every block label across all sections.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.blocks.get_block_def">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.blocks.</span></span><span class="sig-name descname"><span class="pre">get_block_def</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/blocks.html#get_block_def"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.blocks.get_block_def" title="Link to this definition"></a></dt>
+<dd><p>Return the block definition dict for a given label, or None.</p>
+</dd></dl>
+
+</section>
+<section id="module-ml_D_D.engine.generator">
+<span id="ml-d-d-engine-generator-module"></span><h2>ml_D_D.engine.generator module<a class="headerlink" href="#module-ml_D_D.engine.generator" title="Link to this heading"></a></h2>
+<p>generator.py
+PyTorch training script generator.</p>
+<p>Takes the live graph state from all three pipeline tabs and emits a
+complete, runnable train.py file.</p>
+<dl class="simple">
+<dt>Public:</dt><dd><p>generate_pytorch()  -&gt; str   full script as a string
+export_pytorch()             file-dialog save, wired to menu</p>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.generator.export_pytorch">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.generator.</span></span><span class="sig-name descname"><span class="pre">export_pytorch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/generator.html#export_pytorch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.generator.export_pytorch" title="Link to this definition"></a></dt>
+<dd><p>Open a save-file dialog and write the generated script.
+Wired to File &gt; Export &gt; Python &gt; PyTorch.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.generator.generate_pytorch">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.generator.</span></span><span class="sig-name descname"><span class="pre">generate_pytorch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/generator.html#generate_pytorch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.generator.generate_pytorch" title="Link to this definition"></a></dt>
+<dd><p>Build and return the full training script as a string.
+Reads live graph state from all three pipeline tabs.</p>
+</dd></dl>
+
+</section>
+<section id="module-ml_D_D.engine.graph">
+<span id="ml-d-d-engine-graph-module"></span><h2>ml_D_D.engine.graph module<a class="headerlink" href="#module-ml_D_D.engine.graph" title="Link to this heading"></a></h2>
+<p>graph.py
+Graph traversal and validation for all three pipeline tabs.</p>
+<p>Data structures:</p>
+<dl class="simple">
+<dt>GraphNode  - a fully resolved node: its tag, block label, block def, param</dt><dd><p>values read live from DearPyGui, and which pins are connected.</p>
+</dd>
+<dt>ValidationResult - list of Issue objects returned by validate_pipeline().</dt><dd><p>Severity is “error” (blocks training) or “warning” (advisory).</p>
+</dd>
+</dl>
+<p>Public API</p>
+<blockquote>
+<div><p>build_graph(tab)          → dict[ntag -&gt; GraphNode]
+topological_sort(tab)     → list[GraphNode]   (raises CycleError if cyclic)
+validate_pipeline()       → ValidationResult
+get_tab_by_role(role)     → tab dict | None</p>
+</div></blockquote>
+<p>Role expectations</p>
+<blockquote>
+<div><p>data_prep  : must have at least one DataLoader node
+model      : must have exactly one Input and one Output node,</p>
+<blockquote>
+<div><p>all layer nodes must be reachable from Input</p>
+</div></blockquote>
+<p>training   : must have exactly one Loss and one Optimizer node</p>
+</div></blockquote>
+<dl class="py exception">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.CycleError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.graph.</span></span><span class="sig-name descname"><span class="pre">CycleError</span></span><a class="reference internal" href="_modules/ml_D_D/engine/graph.html#CycleError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.graph.CycleError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.GraphNode">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.graph.</span></span><span class="sig-name descname"><span class="pre">GraphNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ntag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'dict[str,</span> <span class="pre">str]'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'list[str]'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'list[str]'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connected_inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'set[str]'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connected_outputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'set[str]'</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ml_D_D/engine/graph.html#GraphNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.graph.GraphNode" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.GraphNode.block_label">
+<span class="sig-name descname"><span class="pre">block_label</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#ml_D_D.engine.graph.GraphNode.block_label" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.GraphNode.connected_inputs">
+<span class="sig-name descname"><span class="pre">connected_inputs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#ml_D_D.engine.graph.GraphNode.connected_inputs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.GraphNode.connected_outputs">
+<span class="sig-name descname"><span class="pre">connected_outputs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#ml_D_D.engine.graph.GraphNode.connected_outputs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.GraphNode.inputs">
+<span class="sig-name descname"><span class="pre">inputs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#ml_D_D.engine.graph.GraphNode.inputs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.GraphNode.ntag">
+<span class="sig-name descname"><span class="pre">ntag</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#ml_D_D.engine.graph.GraphNode.ntag" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.GraphNode.outputs">
+<span class="sig-name descname"><span class="pre">outputs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#ml_D_D.engine.graph.GraphNode.outputs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.GraphNode.params">
+<span class="sig-name descname"><span class="pre">params</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#ml_D_D.engine.graph.GraphNode.params" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.Issue">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.graph.</span></span><span class="sig-name descname"><span class="pre">Issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">severity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[str]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ml_D_D/engine/graph.html#Issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.graph.Issue" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.Issue.message">
+<span class="sig-name descname"><span class="pre">message</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#ml_D_D.engine.graph.Issue.message" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.Issue.ntag">
+<span class="sig-name descname"><span class="pre">ntag</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#ml_D_D.engine.graph.Issue.ntag" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.Issue.severity">
+<span class="sig-name descname"><span class="pre">severity</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#ml_D_D.engine.graph.Issue.severity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.ValidationResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.graph.</span></span><span class="sig-name descname"><span class="pre">ValidationResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issues</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'list[Issue]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ml_D_D/engine/graph.html#ValidationResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.graph.ValidationResult" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.ValidationResult.add_error">
+<span class="sig-name descname"><span class="pre">add_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/graph.html#ValidationResult.add_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.graph.ValidationResult.add_error" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.ValidationResult.add_warning">
+<span class="sig-name descname"><span class="pre">add_warning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/graph.html#ValidationResult.add_warning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.graph.ValidationResult.add_warning" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.ValidationResult.errors">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">errors</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#ml_D_D.engine.graph.Issue" title="ml_D_D.engine.graph.Issue"><span class="pre">Issue</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#ml_D_D.engine.graph.ValidationResult.errors" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.ValidationResult.issues">
+<span class="sig-name descname"><span class="pre">issues</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#ml_D_D.engine.graph.Issue" title="ml_D_D.engine.graph.Issue"><span class="pre">Issue</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#ml_D_D.engine.graph.ValidationResult.issues" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.ValidationResult.ok">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ok</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#ml_D_D.engine.graph.ValidationResult.ok" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.ValidationResult.warnings">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">warnings</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#ml_D_D.engine.graph.Issue" title="ml_D_D.engine.graph.Issue"><span class="pre">Issue</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#ml_D_D.engine.graph.ValidationResult.warnings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.build_graph">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.graph.</span></span><span class="sig-name descname"><span class="pre">build_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#ml_D_D.engine.graph.GraphNode" title="ml_D_D.engine.graph.GraphNode"><span class="pre">GraphNode</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/graph.html#build_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.graph.build_graph" title="Link to this definition"></a></dt>
+<dd><p>Build a dict of GraphNode objects from a tab’s live node/link state.
+Reads current param field values and computes which pins are connected.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.get_tab_by_role">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.graph.</span></span><span class="sig-name descname"><span class="pre">get_tab_by_role</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">role</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/graph.html#get_tab_by_role"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.graph.get_tab_by_role" title="Link to this definition"></a></dt>
+<dd><p>Return the first tab with the given role, or None.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.topological_sort">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.graph.</span></span><span class="sig-name descname"><span class="pre">topological_sort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#ml_D_D.engine.graph.GraphNode" title="ml_D_D.engine.graph.GraphNode"><span class="pre">GraphNode</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/graph.html#topological_sort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.graph.topological_sort" title="Link to this definition"></a></dt>
+<dd><p>Return nodes in execution order (sources first).
+Raises CycleError if the graph contains a cycle.
+Only includes nodes that are part of the connected graph.
+Isolated nodes (no connections at all) are appended at the end.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.graph.validate_pipeline">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.graph.</span></span><span class="sig-name descname"><span class="pre">validate_pipeline</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#ml_D_D.engine.graph.ValidationResult" title="ml_D_D.engine.graph.ValidationResult"><span class="pre">ValidationResult</span></a></span></span><a class="reference internal" href="_modules/ml_D_D/engine/graph.html#validate_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.graph.validate_pipeline" title="Link to this definition"></a></dt>
+<dd><p>Validate all three pipeline tabs.
+Returns a ValidationResult — check .ok and .issues.</p>
+</dd></dl>
+
+</section>
+<section id="module-ml_D_D.engine.inference">
+<span id="ml-d-d-engine-inference-module"></span><h2>ml_D_D.engine.inference module<a class="headerlink" href="#module-ml_D_D.engine.inference" title="Link to this heading"></a></h2>
+<p>inference.py
+Inference mode - sample a random image from the test/val dataset,
+run a forward pass through the trained model, show top-k predictions.</p>
+<p>No file uploading — samples come directly from the Data Prep graph
+using train=False on the dataset node.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.inference.open_inference_window">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.inference.</span></span><span class="sig-name descname"><span class="pre">open_inference_window</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/inference.html#open_inference_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.inference.open_inference_window" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.engine.metrics">
+<span id="ml-d-d-engine-metrics-module"></span><h2>ml_D_D.engine.metrics module<a class="headerlink" href="#module-ml_D_D.engine.metrics" title="Link to this heading"></a></h2>
+<p>metrics.py
+Metrics window - shows a live summary of the most recent training run.</p>
+<p>Reads directly from state.train_state which is populated by runner.py
+during and after training. Can be opened at any time; updates on each
+open to reflect the latest data.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.metrics.open_metrics_window">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.metrics.</span></span><span class="sig-name descname"><span class="pre">open_metrics_window</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/metrics.html#open_metrics_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.metrics.open_metrics_window" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-ml_D_D.engine.run">
+<span id="ml-d-d-engine-run-module"></span><h2>ml_D_D.engine.run module<a class="headerlink" href="#module-ml_D_D.engine.run" title="Link to this heading"></a></h2>
+<p>run.py
+Real PyTorch training execution in a background thread.</p>
+<dl class="simple">
+<dt>The thread communicates with the UI via a queue:</dt><dd><p>_result_queue  — epoch results posted by the thread, drained each frame</p>
+</dd>
+</dl>
+<p>PyTorch is required. The caller (training.py) is responsible for checking
+that torch is installed before calling start_real_training().</p>
+<dl class="simple">
+<dt>Public API:</dt><dd><p>start_training(cfg)   start the background thread
+stop_training()       signal the thread to stop
+pause_training()      toggle pause
+drain_result_queue()       called each frame; updates UI with results</p>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.run.drain_result_queue">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.run.</span></span><span class="sig-name descname"><span class="pre">drain_result_queue</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/run.html#drain_result_queue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.run.drain_result_queue" title="Link to this definition"></a></dt>
+<dd><p>Drain all pending results from the training thread and update the UI.
+Must be called from the main thread every frame.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.run.is_paused">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.run.</span></span><span class="sig-name descname"><span class="pre">is_paused</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/run.html#is_paused"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.run.is_paused" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.run.pause_training">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.run.</span></span><span class="sig-name descname"><span class="pre">pause_training</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/run.html#pause_training"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.run.pause_training" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.run.start_training">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.run.</span></span><span class="sig-name descname"><span class="pre">start_training</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/run.html#start_training"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.run.start_training" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_D_D.engine.run.stop_training">
+<span class="sig-prename descclassname"><span class="pre">ml_D_D.engine.run.</span></span><span class="sig-name descname"><span class="pre">stop_training</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/ml_D_D/engine/run.html#stop_training"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_D_D.engine.run.stop_training" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="ml-d-d-engine-training-setup-module">
+<h2>ml_D_D.engine.training_setup module<a class="headerlink" href="#ml-d-d-engine-training-setup-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-ml_D_D.engine">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ml_D_D.engine" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

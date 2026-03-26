@@ -1,0 +1,216 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.graph.pipeline &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ml_D_D.graph.pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ml_D_D.graph.pipeline</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">graph/pipeline.py</span>
+<span class="sd">Pipeline stage definitions and completion detection.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dearpygui.dearpygui</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dpg</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ml_D_D.state</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">state</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.blocks</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_block_def</span>
+
+<span class="n">ROLES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;data_prep&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Data Prep&quot;</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span> <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">130</span><span class="p">),</span>  <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Datasets, loaders, augmentation&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;model&quot;</span><span class="p">:</span>     <span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Model&quot;</span><span class="p">,</span>     <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span> <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">130</span><span class="p">),</span>  <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Layers, activations, normalization&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;training&quot;</span><span class="p">:</span>  <span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Training&quot;</span><span class="p">,</span>  <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">220</span><span class="p">,</span> <span class="mi">180</span><span class="p">),</span> <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">110</span><span class="p">,</span> <span class="mi">90</span><span class="p">),</span>  <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Loss, optimizer, scheduler, metrics&quot;</span><span class="p">},</span>
+<span class="p">}</span>
+
+<span class="n">ROLE_ORDER</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;data_prep&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;training&quot;</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tab_complete</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">t</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">ntag</span><span class="p">,</span> <span class="n">node_info</span> <span class="ow">in</span> <span class="n">t</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">block_label</span> <span class="o">=</span> <span class="n">node_info</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node_info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">node_info</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">get_block_def</span><span class="p">(</span><span class="n">block_label</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">block</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">block</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]:</span>
+            <span class="k">continue</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">ntag</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+        <span class="n">tid_s</span><span class="p">,</span> <span class="n">nid_s</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">any_filled</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">block</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]:</span>
+            <span class="n">ftag</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">tid_s</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">nid_s</span><span class="si">}</span><span class="s2">_input_</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">ftag</span><span class="p">)</span> <span class="ow">and</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">ftag</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="n">any_filled</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">any_filled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="get_stage_statuses">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.pipeline.get_stage_statuses">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_stage_statuses</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+    <span class="n">role_tab</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ROLE_ORDER</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;role&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">role_tab</span><span class="p">:</span>
+            <span class="n">role_tab</span><span class="p">[</span><span class="n">role</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">ROLE_ORDER</span><span class="p">:</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">ROLES</span><span class="p">[</span><span class="n">role</span><span class="p">]</span>
+        <span class="n">t</span>    <span class="o">=</span> <span class="n">role_tab</span><span class="p">[</span><span class="n">role</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;unassigned&quot;</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">t</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;empty&quot;</span>
+        <span class="k">elif</span> <span class="n">_tab_complete</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;complete&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;partial&quot;</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="n">role</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">],</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">],</span> <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">status</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+
+<div class="viewcode-block" id="pipeline_ready">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.pipeline.pipeline_ready">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pipeline_ready</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;complete&quot;</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">get_stage_statuses</span><span class="p">())</span></div>
+
+
+
+<span class="n">_last_pipeline_state</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="refresh_pipeline_bar">
+<a class="viewcode-back" href="../../../ml_D_D.graph.html#ml_D_D.graph.pipeline.refresh_pipeline_bar">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">refresh_pipeline_bar</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">global</span> <span class="n">_last_pipeline_state</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;pipeline_bar_content&quot;</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="n">statuses</span>  <span class="o">=</span> <span class="n">get_stage_statuses</span><span class="p">()</span>
+    <span class="n">any_empty</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;empty&quot;</span><span class="p">,</span> <span class="s2">&quot;unassigned&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">statuses</span><span class="p">)</span>
+
+    <span class="n">errors</span> <span class="o">=</span> <span class="n">warnings</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">any_empty</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_pipeline</span>
+            <span class="n">result</span>   <span class="o">=</span> <span class="n">validate_pipeline</span><span class="p">()</span>
+            <span class="n">errors</span>   <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span>
+            <span class="n">warnings</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">warnings</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">errors</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="n">summary_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">warnings</span><span class="p">,</span> <span class="n">any_empty</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">summary_key</span> <span class="o">==</span> <span class="n">_last_pipeline_state</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">_last_pipeline_state</span> <span class="o">=</span> <span class="n">summary_key</span>
+
+    <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="s2">&quot;pipeline_bar_content&quot;</span><span class="p">,</span> <span class="n">children_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">any_empty</span><span class="p">:</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Pipeline incomplete - fill all three tabs to train&quot;</span>
+    <span class="k">elif</span> <span class="n">errors</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Pipeline error (</span><span class="si">{</span><span class="n">errors</span><span class="si">}</span><span class="s2"> issue(s)) - check nodes before training&quot;</span>
+    <span class="k">elif</span> <span class="n">warnings</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Pipeline ready - </span><span class="si">{</span><span class="n">warnings</span><span class="si">}</span><span class="s2"> warning(s)&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">220</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Pipeline ready&quot;</span>
+
+    <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="s2">&quot;pipeline_bar_content&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

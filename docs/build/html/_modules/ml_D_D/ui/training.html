@@ -1,0 +1,424 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.ui.training &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ml_D_D.ui.training</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ml_D_D.ui.training</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">ui/training.py</span>
+<span class="sd">Training state machine: on_run(), on_pause(), on_stop(), per-frame tick,</span>
+<span class="sd">node highlighting, and CUDA/VRAM menubar stats.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dearpygui.dearpygui</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dpg</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ml_D_D.state</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">state</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">TRAIN_BTN_STYLES</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.console</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+
+
+<span class="n">_cuda_checked</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="update_cuda_stats">
+<a class="viewcode-back" href="../../../ml_D_D.ui.html#ml_D_D.ui.training.update_cuda_stats">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_cuda_stats</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">global</span> <span class="n">_cuda_checked</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;mb_cuda&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;mb_vram&quot;</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="n">dev</span>   <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">current_device</span><span class="p">()</span>
+            <span class="n">used</span>  <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">memory_allocated</span><span class="p">(</span><span class="n">dev</span><span class="p">)</span>  <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">total</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">get_device_properties</span><span class="p">(</span><span class="n">dev</span><span class="p">)</span><span class="o">.</span><span class="n">total_memory</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">ratio</span> <span class="o">=</span> <span class="n">used</span> <span class="o">/</span> <span class="n">total</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="n">vram_col</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="mi">80</span><span class="p">,</span>  <span class="mi">220</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span> <span class="k">if</span> <span class="n">ratio</span> <span class="o">&lt;</span> <span class="mf">0.60</span> <span class="k">else</span>
+                <span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span>  <span class="mi">60</span><span class="p">)</span> <span class="k">if</span> <span class="n">ratio</span> <span class="o">&lt;</span> <span class="mf">0.85</span> <span class="k">else</span>
+                <span class="p">(</span><span class="mi">220</span><span class="p">,</span>  <span class="mi">80</span><span class="p">,</span>  <span class="mi">80</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;mb_vram&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">used</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> GB&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">configure_item</span><span class="p">(</span><span class="s2">&quot;mb_vram&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">vram_col</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_cuda_checked</span><span class="p">:</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;mb_cuda&quot;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">get_device_name</span><span class="p">(</span><span class="n">dev</span><span class="p">))</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">configure_item</span><span class="p">(</span><span class="s2">&quot;mb_cuda&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">220</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+                <span class="n">_cuda_checked</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_cuda_checked</span><span class="p">:</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;mb_cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;Not available&quot;</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">configure_item</span><span class="p">(</span><span class="s2">&quot;mb_cuda&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">80</span><span class="p">))</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;mb_vram&quot;</span><span class="p">,</span> <span class="s2">&quot;N/A&quot;</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">configure_item</span><span class="p">(</span><span class="s2">&quot;mb_vram&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+                <span class="n">_cuda_checked</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_cuda_checked</span><span class="p">:</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;mb_cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;PyTorch not installed&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">configure_item</span><span class="p">(</span><span class="s2">&quot;mb_cuda&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">80</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;mb_vram&quot;</span><span class="p">,</span> <span class="s2">&quot;N/A&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">configure_item</span><span class="p">(</span><span class="s2">&quot;mb_vram&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+            <span class="n">_cuda_checked</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+
+
+<span class="n">_node_issue_themes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<div class="viewcode-block" id="highlight_issues">
+<a class="viewcode-back" href="../../../ml_D_D.ui.html#ml_D_D.ui.training.highlight_issues">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">highlight_issues</span><span class="p">(</span><span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.blocks</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_block_def</span>
+    <span class="n">clear_highlights</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">issues</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">issue</span><span class="o">.</span><span class="n">ntag</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">issue</span><span class="o">.</span><span class="n">ntag</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">block_label</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">tab</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">issue</span><span class="o">.</span><span class="n">ntag</span> <span class="ow">in</span> <span class="n">tab</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]:</span>
+                <span class="n">ni</span> <span class="o">=</span> <span class="n">tab</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">][</span><span class="n">issue</span><span class="o">.</span><span class="n">ntag</span><span class="p">]</span>
+                <span class="n">block_label</span> <span class="o">=</span> <span class="n">ni</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ni</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">ni</span>
+                <span class="k">break</span>
+        <span class="n">block</span>     <span class="o">=</span> <span class="n">get_block_def</span><span class="p">(</span><span class="n">block_label</span><span class="p">)</span> <span class="k">if</span> <span class="n">block_label</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">title_col</span> <span class="o">=</span> <span class="n">block</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">block</span> <span class="k">else</span> <span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="n">outline</span>   <span class="o">=</span> <span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span> <span class="k">if</span> <span class="n">issue</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span> <span class="k">else</span> <span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme</span><span class="p">()</span> <span class="k">as</span> <span class="n">th</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme_component</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNode</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeCol_TitleBar</span><span class="p">,</span>         <span class="n">title_col</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCat_Nodes</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeCol_TitleBarHovered</span><span class="p">,</span>  <span class="nb">tuple</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">c</span><span class="o">+</span><span class="mi">30</span><span class="p">,</span><span class="mi">255</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">title_col</span><span class="p">),</span> <span class="n">category</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCat_Nodes</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeCol_TitleBarSelected</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">c</span><span class="o">+</span><span class="mi">50</span><span class="p">,</span><span class="mi">255</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">title_col</span><span class="p">),</span> <span class="n">category</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCat_Nodes</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvNodeCol_NodeOutline</span><span class="p">,</span>      <span class="n">outline</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCat_Nodes</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">bind_item_theme</span><span class="p">(</span><span class="n">issue</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span> <span class="n">th</span><span class="p">)</span>
+        <span class="n">_node_issue_themes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">th</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="clear_highlights">
+<a class="viewcode-back" href="../../../ml_D_D.ui.html#ml_D_D.ui.training.clear_highlights">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">clear_highlights</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">global</span> <span class="n">_node_issue_themes</span>
+    <span class="k">for</span> <span class="n">tab</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">ntag</span><span class="p">,</span> <span class="n">ni</span> <span class="ow">in</span> <span class="n">tab</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">ntag</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">original</span> <span class="o">=</span> <span class="n">ni</span><span class="p">[</span><span class="s2">&quot;theme&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ni</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">bind_item_theme</span><span class="p">(</span><span class="n">ntag</span><span class="p">,</span> <span class="n">original</span> <span class="k">if</span> <span class="n">original</span> <span class="ow">and</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">original</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">_node_issue_themes</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+
+<div class="viewcode-block" id="apply_train_btn_style">
+<a class="viewcode-back" href="../../../ml_D_D.ui.html#ml_D_D.ui.training.apply_train_btn_style">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_train_btn_style</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">train_state</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
+    <span class="n">styles</span> <span class="o">=</span> <span class="n">TRAIN_BTN_STYLES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">TRAIN_BTN_STYLES</span><span class="p">[</span><span class="s2">&quot;idle&quot;</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s2">&quot;btn_run&quot;</span><span class="p">,</span> <span class="s2">&quot;btn_pause&quot;</span><span class="p">,</span> <span class="s2">&quot;btn_stop&quot;</span><span class="p">],</span> <span class="n">styles</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">set_item_label</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">configure_item</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="n">enabled</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme</span><span class="p">()</span> <span class="k">as</span> <span class="n">th</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">theme_component</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvButton</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCol_Button</span><span class="p">,</span>        <span class="p">(</span><span class="o">*</span><span class="n">col</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCol_ButtonHovered</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">c</span><span class="o">+</span><span class="mi">30</span><span class="p">,</span><span class="mi">255</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">col</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="mi">255</span><span class="p">,))</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_color</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvThemeCol_ButtonActive</span><span class="p">,</span>  <span class="nb">tuple</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">c</span><span class="o">+</span><span class="mi">50</span><span class="p">,</span><span class="mi">255</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">col</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="mi">255</span><span class="p">,))</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_theme_style</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvStyleVar_FrameRounding</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">bind_item_theme</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">th</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update_status_indicator">
+<a class="viewcode-back" href="../../../ml_D_D.ui.html#ml_D_D.ui.training.update_status_indicator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_status_indicator</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">s</span>    <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">train_state</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
+    <span class="n">col</span>  <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;idle&quot;</span><span class="p">:(</span><span class="mi">80</span><span class="p">,</span><span class="mi">220</span><span class="p">,</span><span class="mi">120</span><span class="p">),</span><span class="s2">&quot;running&quot;</span><span class="p">:(</span><span class="mi">100</span><span class="p">,</span><span class="mi">180</span><span class="p">,</span><span class="mi">255</span><span class="p">),</span><span class="s2">&quot;paused&quot;</span><span class="p">:(</span><span class="mi">220</span><span class="p">,</span><span class="mi">180</span><span class="p">,</span><span class="mi">60</span><span class="p">)}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">s</span><span class="p">,(</span><span class="mi">120</span><span class="p">,</span><span class="mi">120</span><span class="p">,</span><span class="mi">120</span><span class="p">))</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;idle&quot;</span><span class="p">:</span><span class="s2">&quot;Ready&quot;</span><span class="p">,</span><span class="s2">&quot;running&quot;</span><span class="p">:</span><span class="s2">&quot;Training&quot;</span><span class="p">,</span><span class="s2">&quot;paused&quot;</span><span class="p">:</span><span class="s2">&quot;Paused&quot;</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="s2">&quot;Idle&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;status_dot&quot;</span><span class="p">):</span>  <span class="n">dpg</span><span class="o">.</span><span class="n">configure_item</span><span class="p">(</span><span class="s2">&quot;status_dot&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;status_text&quot;</span><span class="p">):</span> <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;status_text&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_train_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">fallback</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">else</span> <span class="n">fallback</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
+    <span class="n">raw_ckpt</span>  <span class="o">=</span> <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_ckpt_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;./checkpoints&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;checkpoints&quot;</span>
+    <span class="n">ckpt_path</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">raw_ckpt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ckpt_path</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">()</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">current_file</span><span class="p">:</span>
+        <span class="n">ckpt_path</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">current_file</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">ckpt_path</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;epochs&quot;</span><span class="p">:</span>       <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_epochs&quot;</span><span class="p">,</span>      <span class="mi">20</span><span class="p">),</span>
+        <span class="s2">&quot;val_split&quot;</span><span class="p">:</span>    <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_val_split&quot;</span><span class="p">,</span>    <span class="mf">0.2</span><span class="p">),</span>
+        <span class="s2">&quot;seed&quot;</span><span class="p">:</span>         <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_seed&quot;</span><span class="p">,</span>         <span class="mi">42</span><span class="p">),</span>
+        <span class="s2">&quot;shuffle&quot;</span><span class="p">:</span>      <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_shuffle&quot;</span><span class="p">,</span>      <span class="kc">True</span><span class="p">),</span>
+        <span class="s2">&quot;device&quot;</span><span class="p">:</span>       <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_device&quot;</span><span class="p">,</span>       <span class="s2">&quot;auto&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;amp&quot;</span><span class="p">:</span>          <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_amp&quot;</span><span class="p">,</span>          <span class="kc">False</span><span class="p">),</span>
+        <span class="s2">&quot;ckpt_dir&quot;</span><span class="p">:</span>     <span class="nb">str</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">),</span>
+        <span class="s2">&quot;ckpt_every&quot;</span><span class="p">:</span>   <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_ckpt_every&quot;</span><span class="p">,</span>   <span class="mi">5</span><span class="p">),</span>
+        <span class="s2">&quot;ckpt_best&quot;</span><span class="p">:</span>    <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_ckpt_best&quot;</span><span class="p">,</span>    <span class="kc">True</span><span class="p">),</span>
+        <span class="s2">&quot;ckpt_monitor&quot;</span><span class="p">:</span> <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_ckpt_monitor&quot;</span><span class="p">,</span> <span class="s2">&quot;val_loss&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;es_enable&quot;</span><span class="p">:</span>    <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_es_enable&quot;</span><span class="p">,</span>    <span class="kc">False</span><span class="p">),</span>
+        <span class="s2">&quot;es_patience&quot;</span><span class="p">:</span>  <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_es_patience&quot;</span><span class="p">,</span>  <span class="mi">5</span><span class="p">),</span>
+        <span class="s2">&quot;es_min_delta&quot;</span><span class="p">:</span> <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;cfg_es_min_delta&quot;</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
+<div class="viewcode-block" id="on_run">
+<a class="viewcode-back" href="../../../ml_D_D.ui.html#ml_D_D.ui.training.on_run">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_run</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_pipeline</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.run</span><span class="w">   </span><span class="kn">import</span> <span class="n">start_training</span>
+
+    <span class="n">ts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">train_state</span>
+    <span class="n">s</span>  <span class="o">=</span> <span class="n">ts</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="s2">&quot;paused&quot;</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.run</span><span class="w"> </span><span class="kn">import</span> <span class="n">pause_training</span>
+        <span class="n">pause_training</span><span class="p">()</span>
+        <span class="n">ts</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;running&quot;</span>
+        <span class="n">log</span><span class="p">(</span><span class="s2">&quot;Training resumed.&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
+        <span class="n">apply_train_btn_style</span><span class="p">()</span>
+        <span class="n">update_status_indicator</span><span class="p">()</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="n">s</span> <span class="o">!=</span> <span class="s2">&quot;idle&quot;</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Require the project to be saved before training</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;current_file&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">log</span><span class="p">(</span><span class="s2">&quot;Save your project first before training (Ctrl+S or File &gt; Save As).&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>  <span class="c1"># noqa: F401</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="n">log</span><span class="p">(</span><span class="s2">&quot;PyTorch is not installed. Run:  pip install torch torchvision&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_pipeline</span><span class="p">()</span>
+    <span class="n">clear_highlights</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">issues</span><span class="p">:</span>
+        <span class="n">highlight_issues</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">issues</span><span class="p">)</span>
+        <span class="n">log</span><span class="p">(</span><span class="s2">&quot;-- Validation --&quot;</span><span class="p">,</span> <span class="s2">&quot;header&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span>
+            <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ERROR: </span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [</span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">ntag</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="n">issue</span><span class="o">.</span><span class="n">ntag</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">warnings</span><span class="p">:</span>
+            <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;WARN:  </span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot; [</span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">ntag</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="n">issue</span><span class="o">.</span><span class="n">ntag</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="s2">&quot;warning&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">ok</span><span class="p">:</span>
+        <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot start - </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span><span class="si">}</span><span class="s2"> error(s). Fix highlighted nodes.&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
+        <span class="n">apply_train_btn_style</span><span class="p">()</span>
+        <span class="n">update_status_indicator</span><span class="p">()</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">warnings</span><span class="p">:</span>
+        <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Validation passed with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">warnings</span><span class="p">)</span><span class="si">}</span><span class="s2"> warning(s).&quot;</span><span class="p">,</span> <span class="s2">&quot;warning&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">log</span><span class="p">(</span><span class="s2">&quot;Validation passed.&quot;</span><span class="p">,</span> <span class="s2">&quot;success&quot;</span><span class="p">)</span>
+
+    <span class="n">cfg</span>   <span class="o">=</span> <span class="n">_read_train_config</span><span class="p">()</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;epochs&quot;</span><span class="p">]</span>
+
+    <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Checkpoints -&gt; </span><span class="si">{</span><span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;ckpt_dir&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;plot_epochs&quot;</span><span class="p">,</span><span class="s2">&quot;plot_tl&quot;</span><span class="p">,</span><span class="s2">&quot;plot_vl&quot;</span><span class="p">,</span><span class="s2">&quot;plot_ta&quot;</span><span class="p">,</span><span class="s2">&quot;plot_va&quot;</span><span class="p">,</span><span class="s2">&quot;plot_batch_x&quot;</span><span class="p">,</span><span class="s2">&quot;plot_batch_y&quot;</span><span class="p">):</span>
+        <span class="n">ts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">ts</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+        <span class="s2">&quot;status&quot;</span><span class="p">:</span>             <span class="s2">&quot;running&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;epoch&quot;</span><span class="p">:</span>              <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;total_epochs&quot;</span><span class="p">:</span>       <span class="n">total</span><span class="p">,</span>
+        <span class="s2">&quot;start_time&quot;</span><span class="p">:</span>         <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
+        <span class="s2">&quot;real&quot;</span><span class="p">:</span>               <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;_last_logged_epoch&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">})</span>
+    <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;train_progress&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting training - </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> epochs.&quot;</span><span class="p">,</span> <span class="s2">&quot;success&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.summary</span><span class="w"> </span><span class="kn">import</span> <span class="n">refresh_model_summary</span>
+        <span class="n">refresh_model_summary</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="n">start_training</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">apply_train_btn_style</span><span class="p">()</span>
+    <span class="n">update_status_indicator</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="on_pause">
+<a class="viewcode-back" href="../../../ml_D_D.ui.html#ml_D_D.ui.training.on_pause">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_pause</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.run</span><span class="w"> </span><span class="kn">import</span> <span class="n">pause_training</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">train_state</span>
+    <span class="k">if</span> <span class="n">ts</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;running&quot;</span><span class="p">:</span>
+        <span class="n">ts</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;paused&quot;</span>
+        <span class="n">pause_training</span><span class="p">()</span>
+        <span class="n">log</span><span class="p">(</span><span class="s2">&quot;Training paused.&quot;</span><span class="p">,</span> <span class="s2">&quot;warning&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ts</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;paused&quot;</span><span class="p">:</span>
+        <span class="n">ts</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;running&quot;</span>
+        <span class="n">pause_training</span><span class="p">()</span>
+        <span class="n">log</span><span class="p">(</span><span class="s2">&quot;Training resumed.&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
+    <span class="n">apply_train_btn_style</span><span class="p">()</span>
+    <span class="n">update_status_indicator</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="on_stop">
+<a class="viewcode-back" href="../../../ml_D_D.ui.html#ml_D_D.ui.training.on_stop">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_stop</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.run</span><span class="w"> </span><span class="kn">import</span> <span class="n">stop_training</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">train_state</span>
+    <span class="k">if</span> <span class="n">ts</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="s2">&quot;paused&quot;</span><span class="p">):</span>
+        <span class="n">stop_training</span><span class="p">()</span>
+        <span class="n">ts</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;idle&quot;</span><span class="p">,</span> <span class="s2">&quot;epoch&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;real&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;train_progress&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">log</span><span class="p">(</span><span class="s2">&quot;Training stopped.&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
+        <span class="n">clear_highlights</span><span class="p">()</span>
+        <span class="n">apply_train_btn_style</span><span class="p">()</span>
+        <span class="n">update_status_indicator</span><span class="p">()</span></div>
+
+
+
+<span class="n">_cuda_frame_counter</span>  <span class="o">=</span> <span class="mi">0</span>
+<span class="n">_split_check_counter</span> <span class="o">=</span> <span class="mi">0</span>
+
+
+<div class="viewcode-block" id="tick_training">
+<a class="viewcode-back" href="../../../ml_D_D.ui.html#ml_D_D.ui.training.tick_training">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tick_training</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">global</span> <span class="n">_cuda_frame_counter</span><span class="p">,</span> <span class="n">_split_check_counter</span>
+    <span class="n">_cuda_frame_counter</span>  <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">_split_check_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">_cuda_frame_counter</span> <span class="o">&gt;=</span> <span class="mi">60</span><span class="p">:</span>
+        <span class="n">_cuda_frame_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">update_cuda_stats</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">_split_check_counter</span> <span class="o">&gt;=</span> <span class="mi">30</span><span class="p">:</span>
+        <span class="n">_split_check_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">_update_split_controls</span><span class="p">()</span>
+
+    <span class="n">ts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">train_state</span>
+    <span class="k">if</span> <span class="n">ts</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="s2">&quot;paused&quot;</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.run</span><span class="w"> </span><span class="kn">import</span> <span class="n">drain_result_queue</span>
+    <span class="n">drain_result_queue</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_update_split_controls</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;cfg_val_split&quot;</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tab_by_role</span><span class="p">,</span> <span class="n">build_graph</span>
+        <span class="n">tab</span> <span class="o">=</span> <span class="n">get_tab_by_role</span><span class="p">(</span><span class="s2">&quot;data_prep&quot;</span><span class="p">)</span>
+        <span class="n">has_val_loader</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">tab</span><span class="p">:</span>
+            <span class="n">graph</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+            <span class="n">has_val_loader</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="o">==</span> <span class="s2">&quot;DataLoader (val)&quot;</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">enabled</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">has_val_loader</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">configure_item</span><span class="p">(</span><span class="s2">&quot;cfg_val_split&quot;</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="n">enabled</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">configure_item</span><span class="p">(</span><span class="s2">&quot;cfg_shuffle&quot;</span><span class="p">,</span>   <span class="n">enabled</span><span class="o">=</span><span class="n">enabled</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

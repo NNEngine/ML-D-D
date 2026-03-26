@@ -1,0 +1,284 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.main &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ml_D_D.main</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ml_D_D.main</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">main.py</span>
+<span class="sd">ML Forge entry point.</span>
+
+<span class="sd">Initialises DearPyGui, shows a loading splash, builds the full UI,</span>
+<span class="sd">creates the three pipeline tabs, and runs the render loop.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dearpygui.dearpygui</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dpg</span>
+
+<span class="c1"># Core IMports</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.console</span><span class="w">       </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.nodes</span><span class="w">      </span><span class="kn">import</span> <span class="n">delete_selected_nodes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.palette</span><span class="w">       </span><span class="kn">import</span> <span class="n">rebuild_palette</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.pipeline</span><span class="w">   </span><span class="kn">import</span> <span class="n">refresh_pipeline_bar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.tabs</span><span class="w">       </span><span class="kn">import</span> <span class="n">new_tab</span><span class="p">,</span> <span class="n">sync_active_tab</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.training</span><span class="w">      </span><span class="kn">import</span> <span class="n">apply_train_btn_style</span><span class="p">,</span> <span class="n">tick_training</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.undo</span><span class="w">       </span><span class="kn">import</span> <span class="n">refresh_undo_menu</span>
+
+<span class="c1"># UI builders</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.menubar</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_menubar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.layout</span><span class="w">  </span><span class="kn">import</span> <span class="n">build_main_window</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.resize</span><span class="w">  </span><span class="kn">import</span> <span class="n">resize_callback</span>
+
+
+<span class="c1">#  Splash helpers</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_splash</span><span class="p">(</span><span class="n">vw</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">vh</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">sw</span><span class="p">,</span> <span class="n">sh</span> <span class="o">=</span> <span class="mi">340</span><span class="p">,</span> <span class="mi">160</span>
+    <span class="n">sx</span> <span class="o">=</span> <span class="p">(</span><span class="n">vw</span> <span class="o">-</span> <span class="n">sw</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">sy</span> <span class="o">=</span> <span class="p">(</span><span class="n">vh</span> <span class="o">-</span> <span class="n">sh</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">window</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;splash&quot;</span><span class="p">,</span> <span class="n">no_title_bar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_move</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">no_resize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_scrollbar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_collapse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">modal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="n">sx</span><span class="p">,</span> <span class="n">sy</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="n">sw</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">sh</span><span class="p">):</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;ML D&amp;D&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;splash_title&quot;</span><span class="p">,</span>
+                     <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+
+        <span class="c1"># Centre the title text manually after first render</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Initialising...&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;splash_status&quot;</span><span class="p">,</span>
+                     <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_progress_bar</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;splash_progress&quot;</span><span class="p">,</span>
+                             <span class="n">default_value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                             <span class="n">width</span><span class="o">=</span><span class="n">sw</span> <span class="o">-</span> <span class="mi">40</span><span class="p">,</span>
+                             <span class="n">overlay</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;splash_step&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_splash_step</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">progress</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;splash_status&quot;</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;splash_status&quot;</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;splash_progress&quot;</span><span class="p">):</span>
+        <span class="c1"># Animate from current value to target in small increments</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="s2">&quot;splash_progress&quot;</span><span class="p">)</span>
+        <span class="n">steps</span>   <span class="o">=</span> <span class="mi">8</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">v</span>   <span class="o">=</span> <span class="n">current</span> <span class="o">+</span> <span class="p">(</span><span class="n">progress</span> <span class="o">-</span> <span class="n">current</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">/</span> <span class="n">steps</span><span class="p">)</span>
+            <span class="n">pct</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;splash_progress&quot;</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">configure_item</span><span class="p">(</span><span class="s2">&quot;splash_progress&quot;</span><span class="p">,</span> <span class="n">overlay</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pct</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">render_dearpygui_frame</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.018</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">render_dearpygui_frame</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_close_splash</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;splash&quot;</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="s2">&quot;splash&quot;</span><span class="p">)</span>
+
+
+<span class="c1">#  Main</span>
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../ml_D_D.html#ml_D_D.main.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">dpg</span><span class="o">.</span><span class="n">create_context</span><span class="p">()</span>
+    <span class="n">dpg</span><span class="o">.</span><span class="n">create_viewport</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;ML D&amp;D&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1380</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">820</span><span class="p">,</span>
+                        <span class="n">resizable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">dpg</span><span class="o">.</span><span class="n">setup_dearpygui</span><span class="p">()</span>
+    <span class="n">dpg</span><span class="o">.</span><span class="n">show_viewport</span><span class="p">()</span>
+
+    <span class="n">vw</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_viewport_client_width</span><span class="p">()</span>
+    <span class="n">vh</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_viewport_client_height</span><span class="p">()</span>
+    <span class="n">_build_splash</span><span class="p">(</span><span class="n">vw</span><span class="p">,</span> <span class="n">vh</span><span class="p">)</span>
+    <span class="n">dpg</span><span class="o">.</span><span class="n">render_dearpygui_frame</span><span class="p">()</span>
+
+    <span class="n">_splash_step</span><span class="p">(</span><span class="s2">&quot;Building UI...&quot;</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">)</span>
+    <span class="n">build_menubar</span><span class="p">()</span>
+    <span class="n">build_main_window</span><span class="p">()</span>
+    <span class="n">dpg</span><span class="o">.</span><span class="n">set_viewport_resize_callback</span><span class="p">(</span><span class="n">resize_callback</span><span class="p">)</span>
+    <span class="n">dpg</span><span class="o">.</span><span class="n">set_primary_window</span><span class="p">(</span><span class="s2">&quot;main_window&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">resize_callback</span><span class="p">()</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">ml_D_D.state</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">state</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.tabs</span><span class="w"> </span><span class="kn">import</span> <span class="n">tab_tag</span>
+
+    <span class="k">for</span> <span class="n">tab_name</span><span class="p">,</span> <span class="n">tab_role</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;Data Prep&quot;</span><span class="p">,</span> <span class="s2">&quot;data_prep&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;Model&quot;</span><span class="p">,</span>     <span class="s2">&quot;model&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;Training&quot;</span><span class="p">,</span>  <span class="s2">&quot;training&quot;</span><span class="p">),</span>
+    <span class="p">]:</span>
+        <span class="n">new_tab</span><span class="p">(</span><span class="n">tab_name</span><span class="p">,</span> <span class="n">role</span><span class="o">=</span><span class="n">tab_role</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;canvas_tab_dummy&quot;</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="s2">&quot;canvas_tab_dummy&quot;</span><span class="p">)</span>
+
+    <span class="n">first_tid</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span> <span class="o">=</span> <span class="n">first_tid</span>
+    <span class="n">dpg</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">&quot;canvas_tabbar&quot;</span><span class="p">,</span> <span class="n">tab_tag</span><span class="p">(</span><span class="n">first_tid</span><span class="p">))</span>
+
+    <span class="n">_splash_step</span><span class="p">(</span><span class="s2">&quot;UI built.&quot;</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">)</span>
+
+    <span class="n">_splash_step</span><span class="p">(</span><span class="s2">&quot;Loading block palette...&quot;</span><span class="p">,</span> <span class="mf">0.40</span><span class="p">)</span>
+    <span class="n">rebuild_palette</span><span class="p">()</span>
+    <span class="n">_splash_step</span><span class="p">(</span><span class="s2">&quot;Palette loaded.&quot;</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">)</span>
+
+    <span class="n">_splash_step</span><span class="p">(</span><span class="s2">&quot;Tabs ready.&quot;</span><span class="p">,</span> <span class="mf">0.78</span><span class="p">)</span>
+
+    <span class="n">_splash_step</span><span class="p">(</span><span class="s2">&quot;Finalising...&quot;</span><span class="p">,</span> <span class="mf">0.82</span><span class="p">)</span>
+    <span class="n">apply_train_btn_style</span><span class="p">()</span>
+    <span class="n">refresh_undo_menu</span><span class="p">()</span>
+    <span class="n">refresh_pipeline_bar</span><span class="p">()</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.training</span><span class="w"> </span><span class="kn">import</span> <span class="n">update_cuda_stats</span>
+    <span class="n">update_cuda_stats</span><span class="p">()</span>
+
+    <span class="n">_splash_step</span><span class="p">(</span><span class="s2">&quot;Ready.&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.3</span><span class="p">)</span>
+
+    <span class="n">_close_splash</span><span class="p">()</span>
+
+    <span class="n">log</span><span class="p">(</span><span class="s2">&quot;ML-D-D ready.&quot;</span><span class="p">,</span> <span class="s2">&quot;header&quot;</span><span class="p">)</span>
+    <span class="n">log</span><span class="p">(</span><span class="s2">&quot;Build your pipeline across the three tabs: Data Prep -&gt; Model -&gt; Training.&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
+    <span class="n">log</span><span class="p">(</span><span class="s2">&quot;Press RUN when all three pipeline stages are complete.&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
+
+    <span class="n">prev_time</span>       <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">_autofill_counter</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">while</span> <span class="n">dpg</span><span class="o">.</span><span class="n">is_dearpygui_running</span><span class="p">():</span>
+        <span class="n">now</span>       <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">dt</span>        <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="n">prev_time</span>
+        <span class="n">prev_time</span> <span class="o">=</span> <span class="n">now</span>
+
+        <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">is_key_pressed</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvKey_Delete</span><span class="p">):</span>
+            <span class="n">delete_selected_nodes</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">is_key_down</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvKey_LControl</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">is_key_pressed</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvKey_S</span><span class="p">):</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.filesystem.save</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_current</span>
+                <span class="n">save_current</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">is_key_pressed</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvKey_Z</span><span class="p">):</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.undo</span><span class="w"> </span><span class="kn">import</span> <span class="n">undo</span>
+                <span class="n">undo</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">is_key_pressed</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvKey_Y</span><span class="p">):</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.undo</span><span class="w"> </span><span class="kn">import</span> <span class="n">redo</span>
+                <span class="n">redo</span><span class="p">()</span>
+
+        <span class="n">sync_active_tab</span><span class="p">()</span>
+        <span class="n">refresh_pipeline_bar</span><span class="p">()</span>
+        <span class="n">tick_training</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>
+
+        <span class="n">_autofill_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">_autofill_counter</span> <span class="o">&gt;=</span> <span class="mi">30</span><span class="p">:</span>
+            <span class="n">_autofill_counter</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_tab_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">t</span> <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;role&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;model&quot;</span><span class="p">:</span>
+                    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.autofill</span><span class="w"> </span><span class="kn">import</span> <span class="n">on_param_changed</span>
+                    <span class="n">on_param_changed</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+        <span class="n">dpg</span><span class="o">.</span><span class="n">render_dearpygui_frame</span><span class="p">()</span>
+
+    <span class="n">dpg</span><span class="o">.</span><span class="n">destroy_context</span><span class="p">()</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

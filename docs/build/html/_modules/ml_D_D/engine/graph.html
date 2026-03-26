@@ -1,0 +1,611 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.engine.graph &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ml_D_D.engine.graph</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ml_D_D.engine.graph</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">graph.py</span>
+<span class="sd">Graph traversal and validation for all three pipeline tabs.</span>
+
+<span class="sd">Data structures:</span>
+
+<span class="sd">GraphNode  - a fully resolved node: its tag, block label, block def, param</span>
+<span class="sd">             values read live from DearPyGui, and which pins are connected.</span>
+
+<span class="sd">ValidationResult - list of Issue objects returned by validate_pipeline().</span>
+<span class="sd">             Severity is &quot;error&quot; (blocks training) or &quot;warning&quot; (advisory).</span>
+
+<span class="sd">Public API</span>
+
+<span class="sd">  build_graph(tab)          → dict[ntag -&gt; GraphNode]</span>
+<span class="sd">  topological_sort(tab)     → list[GraphNode]   (raises CycleError if cyclic)</span>
+<span class="sd">  validate_pipeline()       → ValidationResult</span>
+<span class="sd">  get_tab_by_role(role)     → tab dict | None</span>
+
+<span class="sd">Role expectations</span>
+
+<span class="sd">  data_prep  : must have at least one DataLoader node</span>
+<span class="sd">  model      : must have exactly one Input and one Output node,</span>
+<span class="sd">               all layer nodes must be reachable from Input</span>
+<span class="sd">  training   : must have exactly one Loss and one Optimizer node</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dearpygui.dearpygui</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dpg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ml_D_D.state</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">state</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.blocks</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_block_def</span>
+
+
+<span class="c1">#  Data structures</span>
+
+<div class="viewcode-block" id="GraphNode">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.graph.GraphNode">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GraphNode</span><span class="p">:</span>
+    <span class="n">ntag</span><span class="p">:</span>        <span class="nb">str</span>
+    <span class="n">block_label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">params</span><span class="p">:</span>      <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>   <span class="c1"># param_name -&gt; current field value</span>
+    <span class="n">inputs</span><span class="p">:</span>      <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>        <span class="c1"># pin names defined by block</span>
+    <span class="n">outputs</span><span class="p">:</span>     <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">connected_inputs</span><span class="p">:</span>  <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>   <span class="c1"># pin names that have an incoming link</span>
+    <span class="n">connected_outputs</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>   <span class="c1"># pin names that have an outgoing link</span></div>
+
+
+
+<div class="viewcode-block" id="Issue">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.graph.Issue">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Issue</span><span class="p">:</span>
+    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span>        <span class="c1"># &quot;error&quot; | &quot;warning&quot;</span>
+    <span class="n">message</span><span class="p">:</span>  <span class="nb">str</span>
+    <span class="n">ntag</span><span class="p">:</span>     <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># node tag if applicable</span></div>
+
+
+
+<div class="viewcode-block" id="ValidationResult">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.graph.ValidationResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ValidationResult</span><span class="p">:</span>
+    <span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Issue</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">errors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Issue</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">issues</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">warnings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Issue</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">issues</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;warning&quot;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ok</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="ValidationResult.add_error">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.graph.ValidationResult.add_error">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ntag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Issue</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">ntag</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ValidationResult.add_warning">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.graph.ValidationResult.add_warning">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_warning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ntag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Issue</span><span class="p">(</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">ntag</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CycleError">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.graph.CycleError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CycleError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+
+<span class="c1">#  Helpers</span>
+
+<div class="viewcode-block" id="get_tab_by_role">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.graph.get_tab_by_role">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_tab_by_role</span><span class="p">(</span><span class="n">role</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first tab with the given role, or None.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;role&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">role</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">t</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_params</span><span class="p">(</span><span class="n">ntag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">block_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read all param field values live from DearPyGui for a node.&quot;&quot;&quot;</span>
+    <span class="n">block</span> <span class="o">=</span> <span class="n">get_block_def</span><span class="p">(</span><span class="n">block_label</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">block</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">ntag</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>          <span class="c1"># node_{tid}_{nid}</span>
+    <span class="n">tid_s</span><span class="p">,</span> <span class="n">nid_s</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">block</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]:</span>
+        <span class="n">ftag</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">tid_s</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">nid_s</span><span class="si">}</span><span class="s2">_input_</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">vals</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">ftag</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="n">ftag</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">vals</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pin_owner</span><span class="p">(</span><span class="n">attr_tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given an attribute tag like node_{tid}_{nid}_in_{pin}</span>
+<span class="sd">    return (node_tag, pin_name) or None if unparseable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># format: node_&lt;tid&gt;_&lt;nid&gt;_in_&lt;pin&gt;  or  node_&lt;tid&gt;_&lt;nid&gt;_out_&lt;pin&gt;</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">attr_tag</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="c1"># node_{tid}_{nid}_{direction}_{pin...}</span>
+    <span class="n">ntag</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">pin</span>  <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">4</span><span class="p">:])</span>
+    <span class="k">return</span> <span class="n">ntag</span><span class="p">,</span> <span class="n">pin</span>
+
+
+<span class="c1">#  Graph builder</span>
+
+<div class="viewcode-block" id="build_graph">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.graph.build_graph">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_graph</span><span class="p">(</span><span class="n">tab</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GraphNode</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build a dict of GraphNode objects from a tab&#39;s live node/link state.</span>
+<span class="sd">    Reads current param field values and computes which pins are connected.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># First pass: which pins have connections?</span>
+    <span class="n">connected_in</span><span class="p">:</span>  <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>   <span class="c1"># ntag -&gt; set of connected input pin names</span>
+    <span class="n">connected_out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>   <span class="c1"># ntag -&gt; set of connected output pin names</span>
+
+    <span class="k">for</span> <span class="n">ntag</span> <span class="ow">in</span> <span class="n">tab</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]:</span>
+        <span class="n">connected_in</span><span class="p">[</span><span class="n">ntag</span><span class="p">]</span>  <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">connected_out</span><span class="p">[</span><span class="n">ntag</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">a1</span><span class="p">,</span> <span class="n">a2</span> <span class="ow">in</span> <span class="n">tab</span><span class="p">[</span><span class="s2">&quot;links&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="c1"># DearPyGui may store endpoints as integer item IDs — resolve to aliases</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">a1</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_item_alias</span><span class="p">(</span><span class="n">a1</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a2</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">a2</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_item_alias</span><span class="p">(</span><span class="n">a2</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">_pin_owner</span><span class="p">(</span><span class="n">a1</span><span class="p">)</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">_pin_owner</span><span class="p">(</span><span class="n">a2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">src</span><span class="p">:</span>
+            <span class="n">connected_out</span><span class="p">[</span><span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">src</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">dst</span><span class="p">:</span>
+            <span class="n">connected_in</span><span class="p">[</span><span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">dst</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Second pass: build GraphNode objects</span>
+    <span class="c1"># node_info may be a plain string (legacy) or {&quot;label&quot;: ..., &quot;theme&quot;: ...}</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_label</span><span class="p">(</span><span class="n">node_info</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">node_info</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node_info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">node_info</span><span class="p">)</span>
+
+    <span class="n">graph</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GraphNode</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">ntag</span><span class="p">,</span> <span class="n">node_info</span> <span class="ow">in</span> <span class="n">tab</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">block_label</span> <span class="o">=</span> <span class="n">_label</span><span class="p">(</span><span class="n">node_info</span><span class="p">)</span>
+        <span class="n">block</span>  <span class="o">=</span> <span class="n">get_block_def</span><span class="p">(</span><span class="n">block_label</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">_read_params</span><span class="p">(</span><span class="n">ntag</span><span class="p">,</span> <span class="n">block_label</span><span class="p">)</span>
+        <span class="n">graph</span><span class="p">[</span><span class="n">ntag</span><span class="p">]</span> <span class="o">=</span> <span class="n">GraphNode</span><span class="p">(</span>
+            <span class="n">ntag</span><span class="o">=</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="n">block_label</span><span class="o">=</span><span class="n">block_label</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">block</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]</span>  <span class="k">if</span> <span class="n">block</span> <span class="k">else</span> <span class="p">[],</span>
+            <span class="n">outputs</span><span class="o">=</span><span class="n">block</span><span class="p">[</span><span class="s2">&quot;outputs&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">block</span> <span class="k">else</span> <span class="p">[],</span>
+            <span class="n">connected_inputs</span><span class="o">=</span><span class="n">connected_in</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ntag</span><span class="p">,</span>  <span class="nb">set</span><span class="p">()),</span>
+            <span class="n">connected_outputs</span><span class="o">=</span><span class="n">connected_out</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ntag</span><span class="p">,</span> <span class="nb">set</span><span class="p">()),</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">graph</span></div>
+
+
+
+<span class="c1"># topoligical sort - kahn&#39;s</span>
+
+<div class="viewcode-block" id="topological_sort">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.graph.topological_sort">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">topological_sort</span><span class="p">(</span><span class="n">tab</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">GraphNode</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return nodes in execution order (sources first).</span>
+<span class="sd">    Raises CycleError if the graph contains a cycle.</span>
+<span class="sd">    Only includes nodes that are part of the connected graph.</span>
+<span class="sd">    Isolated nodes (no connections at all) are appended at the end.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">graph</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="c1"># Build adjacency: ntag -&gt; list[ntag] (successors)</span>
+    <span class="c1"># and in-degree count</span>
+    <span class="n">successors</span><span class="p">:</span>  <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">}</span>
+    <span class="n">in_degree</span><span class="p">:</span>   <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>       <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="mi">0</span>  <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">}</span>
+
+    <span class="c1"># Map from attr_tag -&gt; ntag for quick lookup</span>
+    <span class="n">attr_to_node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">ntag</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">:</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">ntag</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+        <span class="n">tid_s</span><span class="p">,</span> <span class="n">nid_s</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">get_block_def</span><span class="p">(</span><span class="n">graph</span><span class="p">[</span><span class="n">ntag</span><span class="p">]</span><span class="o">.</span><span class="n">block_label</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">block</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">pin</span> <span class="ow">in</span> <span class="n">block</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]:</span>
+            <span class="n">attr_to_node</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">tid_s</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">nid_s</span><span class="si">}</span><span class="s2">_in_</span><span class="si">{</span><span class="n">pin</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ntag</span>
+        <span class="k">for</span> <span class="n">pin</span> <span class="ow">in</span> <span class="n">block</span><span class="p">[</span><span class="s2">&quot;outputs&quot;</span><span class="p">]:</span>
+            <span class="n">attr_to_node</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">tid_s</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">nid_s</span><span class="si">}</span><span class="s2">_out_</span><span class="si">{</span><span class="n">pin</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ntag</span>
+
+    <span class="k">for</span> <span class="n">a1</span><span class="p">,</span> <span class="n">a2</span> <span class="ow">in</span> <span class="n">tab</span><span class="p">[</span><span class="s2">&quot;links&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">a1</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_item_alias</span><span class="p">(</span><span class="n">a1</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a2</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">a2</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">get_item_alias</span><span class="p">(</span><span class="n">a2</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">src_node</span> <span class="o">=</span> <span class="n">attr_to_node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a1</span><span class="p">)</span>
+        <span class="n">dst_node</span> <span class="o">=</span> <span class="n">attr_to_node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">src_node</span> <span class="ow">and</span> <span class="n">dst_node</span> <span class="ow">and</span> <span class="n">src_node</span> <span class="o">!=</span> <span class="n">dst_node</span><span class="p">:</span>
+            <span class="n">successors</span><span class="p">[</span><span class="n">src_node</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dst_node</span><span class="p">)</span>
+            <span class="n">in_degree</span><span class="p">[</span><span class="n">dst_node</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># Kahn&#39;s algorithm</span>
+    <span class="n">queue</span>  <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">in_degree</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">sorted_nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GraphNode</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">while</span> <span class="n">queue</span><span class="p">:</span>
+        <span class="n">ntag</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">sorted_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">graph</span><span class="p">[</span><span class="n">ntag</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">succ</span> <span class="ow">in</span> <span class="n">successors</span><span class="p">[</span><span class="n">ntag</span><span class="p">]:</span>
+            <span class="n">in_degree</span><span class="p">[</span><span class="n">succ</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">in_degree</span><span class="p">[</span><span class="n">succ</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">succ</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_nodes</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">graph</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">CycleError</span><span class="p">(</span><span class="s2">&quot;Graph contains a cycle — cannot sort.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sorted_nodes</span></div>
+
+
+<span class="c1">#  Validators per tab role</span>
+
+<span class="c1"># Nodes that count as &quot;required params&quot; — any param that is not optional</span>
+<span class="c1"># For now: any param field that exists should be filled (empty = warning)</span>
+<span class="n">_OPTIONAL_PARAMS</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;padding&quot;</span><span class="p">,</span> <span class="s2">&quot;bias&quot;</span><span class="p">,</span> <span class="s2">&quot;eps&quot;</span><span class="p">,</span> <span class="s2">&quot;momentum&quot;</span><span class="p">,</span>
+                               <span class="s2">&quot;weight_decay&quot;</span><span class="p">,</span> <span class="s2">&quot;betas&quot;</span><span class="p">,</span> <span class="s2">&quot;ignore_index&quot;</span><span class="p">,</span> <span class="s2">&quot;weight&quot;</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_params</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GraphNode</span><span class="p">],</span> <span class="n">result</span><span class="p">:</span> <span class="n">ValidationResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Warn on empty required params, error on completely unfilled nodes.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">empty</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                 <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span> <span class="ow">and</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_OPTIONAL_PARAMS</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">empty</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">params</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">block_label</span><span class="si">}</span><span class="s2">: all parameters are empty.&quot;</span><span class="p">,</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">empty</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">block_label</span><span class="si">}</span><span class="s2">: params not filled — </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">empty</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+
+
+<span class="n">_DATALOADER_BLOCKS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;DataLoader (train)&quot;</span><span class="p">,</span> <span class="s2">&quot;DataLoader (val)&quot;</span><span class="p">,</span> <span class="s2">&quot;DataLoader&quot;</span><span class="p">}</span>
+<span class="n">_DATASET_BLOCKS</span>    <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;MNIST&quot;</span><span class="p">,</span><span class="s2">&quot;CIFAR10&quot;</span><span class="p">,</span><span class="s2">&quot;CIFAR100&quot;</span><span class="p">,</span><span class="s2">&quot;FashionMNIST&quot;</span><span class="p">,</span><span class="s2">&quot;ImageFolder&quot;</span><span class="p">}</span>
+<span class="n">_AUG_BLOCKS</span>        <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Resize&quot;</span><span class="p">,</span><span class="s2">&quot;CenterCrop&quot;</span><span class="p">,</span><span class="s2">&quot;RandomCrop&quot;</span><span class="p">,</span><span class="s2">&quot;RandomHFlip&quot;</span><span class="p">,</span><span class="s2">&quot;RandomVFlip&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;ColorJitter&quot;</span><span class="p">,</span><span class="s2">&quot;RandomRotation&quot;</span><span class="p">,</span><span class="s2">&quot;GaussianBlur&quot;</span><span class="p">,</span><span class="s2">&quot;RandomErasing&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;Normalize&quot;</span><span class="p">,</span><span class="s2">&quot;ToTensor&quot;</span><span class="p">,</span><span class="s2">&quot;Grayscale&quot;</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_data_prep</span><span class="p">(</span><span class="n">tab</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">ValidationResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">graph</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Data Prep tab has no nodes.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="c1"># Must have exactly one dataset source per chain</span>
+    <span class="n">dataset_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="n">_DATASET_BLOCKS</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataset_nodes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Data Prep tab needs a Dataset node (e.g. CIFAR10, ImageFolder).&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Must have at least a train DataLoader</span>
+    <span class="n">train_loaders</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;DataLoader (train)&quot;</span><span class="p">,</span> <span class="s2">&quot;DataLoader&quot;</span><span class="p">)]</span>
+    <span class="n">val_loaders</span>   <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="o">==</span> <span class="s2">&quot;DataLoader (val)&quot;</span><span class="p">]</span>
+    <span class="n">all_loaders</span>   <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="n">_DATALOADER_BLOCKS</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">train_loaders</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Data Prep tab needs at least a DataLoader (train) node.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Check each dataset output is connected</span>
+    <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">dataset_nodes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;img&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">connected_outputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ds</span><span class="o">.</span><span class="n">block_label</span><span class="si">}</span><span class="s2">: output is not connected.&quot;</span><span class="p">,</span>
+                <span class="n">ds</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Check all dataloaders have connected inputs</span>
+    <span class="k">for</span> <span class="n">loader</span> <span class="ow">in</span> <span class="n">all_loaders</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;img&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loader</span><span class="o">.</span><span class="n">connected_inputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">loader</span><span class="o">.</span><span class="n">block_label</span><span class="si">}</span><span class="s2">: input is not connected — wire the chain into it.&quot;</span><span class="p">,</span>
+                <span class="n">loader</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Check augmentation nodes are not orphaned</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_AUG_BLOCKS</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">connected_inputs</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">connected_outputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">block_label</span><span class="si">}</span><span class="s2">: node is not connected to anything.&quot;</span><span class="p">,</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Cycle check</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">topological_sort</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">CycleError</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Data Prep graph contains a cycle.&quot;</span><span class="p">)</span>
+
+    <span class="n">_validate_params</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_model</span><span class="p">(</span><span class="n">tab</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">ValidationResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">graph</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Model tab has no nodes.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">inputs</span>  <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="o">==</span> <span class="s2">&quot;Input&quot;</span><span class="p">]</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="o">==</span> <span class="s2">&quot;Output&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Model tab needs an Input node.&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model tab has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span><span class="si">}</span><span class="s2"> Input nodes — only one allowed.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Model tab needs an Output node.&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model tab has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span><span class="si">}</span><span class="s2"> Output nodes — only one allowed.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check for orphaned nodes (no connections at all)</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;Input&quot;</span><span class="p">,</span> <span class="s2">&quot;Output&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">connected_inputs</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">connected_outputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">block_label</span><span class="si">}</span><span class="s2">: node is not connected to anything.&quot;</span><span class="p">,</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Check for disconnected inputs on non-source nodes</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">block_label</span> <span class="o">==</span> <span class="s2">&quot;Input&quot;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">inputs</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">connected_inputs</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">block_label</span><span class="si">}</span><span class="s2">: input pin(s) not connected — </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Cycle check</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">topological_sort</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">CycleError</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Model graph contains a cycle.&quot;</span><span class="p">)</span>
+
+    <span class="n">_validate_params</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+
+<span class="n">_LOSS_BLOCKS</span>      <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;CrossEntropyLoss&quot;</span><span class="p">,</span><span class="s2">&quot;MSELoss&quot;</span><span class="p">,</span><span class="s2">&quot;BCELoss&quot;</span><span class="p">,</span><span class="s2">&quot;BCEWithLogits&quot;</span><span class="p">,</span>
+                     <span class="s2">&quot;NLLLoss&quot;</span><span class="p">,</span><span class="s2">&quot;HuberLoss&quot;</span><span class="p">,</span><span class="s2">&quot;KLDivLoss&quot;</span><span class="p">}</span>
+<span class="n">_OPTIMIZER_BLOCKS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Adam&quot;</span><span class="p">,</span><span class="s2">&quot;AdamW&quot;</span><span class="p">,</span><span class="s2">&quot;SGD&quot;</span><span class="p">,</span><span class="s2">&quot;RMSprop&quot;</span><span class="p">,</span><span class="s2">&quot;Adagrad&quot;</span><span class="p">,</span><span class="s2">&quot;LBFGS&quot;</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_training</span><span class="p">(</span><span class="n">tab</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">ValidationResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">graph</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Training tab has no nodes.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="n">model_nodes</span>  <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="o">==</span> <span class="s2">&quot;ModelBlock&quot;</span><span class="p">]</span>
+    <span class="n">loader_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="o">==</span> <span class="s2">&quot;DataLoaderBlock&quot;</span><span class="p">]</span>
+    <span class="n">losses</span>       <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="n">_LOSS_BLOCKS</span><span class="p">]</span>
+    <span class="n">optimizers</span>   <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="n">_OPTIMIZER_BLOCKS</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">model_nodes</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Training tab needs a ModelBlock node (find it in the palette under Training).&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">loader_nodes</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Training tab needs a DataLoaderBlock node (find it in the palette under Training).&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">losses</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Training tab needs a Loss Function node.&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span><span class="si">}</span><span class="s2"> loss nodes found - only the first will be used.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">optimizers</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;Training tab needs an Optimizer node.&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">optimizers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">add_warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">optimizers</span><span class="p">)</span><span class="si">}</span><span class="s2"> optimizer nodes found - only the first will be used.&quot;</span><span class="p">)</span>
+
+    <span class="n">model_node</span>  <span class="o">=</span> <span class="n">model_nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="k">if</span> <span class="n">model_nodes</span>  <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">loader_node</span> <span class="o">=</span> <span class="n">loader_nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">loader_nodes</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">loss_node</span>   <span class="o">=</span> <span class="n">losses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>       <span class="k">if</span> <span class="n">losses</span>       <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">optim_node</span>  <span class="o">=</span> <span class="n">optimizers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="k">if</span> <span class="n">optimizers</span>   <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">model_node</span> <span class="ow">and</span> <span class="n">loader_node</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;images&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loader_node</span><span class="o">.</span><span class="n">connected_outputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                <span class="s2">&quot;DataLoaderBlock: images output must be connected to ModelBlock images input.&quot;</span><span class="p">,</span>
+                <span class="n">loader_node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;images&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_node</span><span class="o">.</span><span class="n">connected_inputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                <span class="s2">&quot;ModelBlock: images input must be connected from DataLoaderBlock images output.&quot;</span><span class="p">,</span>
+                <span class="n">model_node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">model_node</span> <span class="ow">and</span> <span class="n">loss_node</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;predictions&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_node</span><span class="o">.</span><span class="n">connected_outputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                <span class="s2">&quot;ModelBlock: predictions output must be connected to Loss pred input.&quot;</span><span class="p">,</span>
+                <span class="n">model_node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;pred&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loss_node</span><span class="o">.</span><span class="n">connected_inputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">loss_node</span><span class="o">.</span><span class="n">block_label</span><span class="si">}</span><span class="s2">: pred input must be connected from ModelBlock predictions.&quot;</span><span class="p">,</span>
+                <span class="n">loss_node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">loader_node</span> <span class="ow">and</span> <span class="n">loss_node</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;labels&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loader_node</span><span class="o">.</span><span class="n">connected_outputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                <span class="s2">&quot;DataLoaderBlock: labels output must be connected to Loss target input.&quot;</span><span class="p">,</span>
+                <span class="n">loader_node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;target&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loss_node</span><span class="o">.</span><span class="n">connected_inputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">loss_node</span><span class="o">.</span><span class="n">block_label</span><span class="si">}</span><span class="s2">: target input must be connected from DataLoaderBlock labels.&quot;</span><span class="p">,</span>
+                <span class="n">loss_node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">loss_node</span> <span class="ow">and</span> <span class="n">optim_node</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;loss&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loss_node</span><span class="o">.</span><span class="n">connected_outputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">loss_node</span><span class="o">.</span><span class="n">block_label</span><span class="si">}</span><span class="s2">: loss output must be connected to Optimizer params input.&quot;</span><span class="p">,</span>
+                <span class="n">loss_node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;params&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">optim_node</span><span class="o">.</span><span class="n">connected_inputs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">optim_node</span><span class="o">.</span><span class="n">block_label</span><span class="si">}</span><span class="s2">: params input must be connected from Loss loss output.&quot;</span><span class="p">,</span>
+                <span class="n">optim_node</span><span class="o">.</span><span class="n">ntag</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="n">_validate_params</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+
+<span class="c1"># Public: Validate Pipeline</span>
+
+<div class="viewcode-block" id="validate_pipeline">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.graph.validate_pipeline">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_pipeline</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ValidationResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Validate all three pipeline tabs.</span>
+<span class="sd">    Returns a ValidationResult — check .ok and .issues.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">ValidationResult</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">validator</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s2">&quot;data_prep&quot;</span><span class="p">,</span> <span class="n">_validate_data_prep</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span>     <span class="n">_validate_model</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;training&quot;</span><span class="p">,</span>  <span class="n">_validate_training</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="n">tab</span> <span class="o">=</span> <span class="n">get_tab_by_role</span><span class="p">(</span><span class="n">role</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tab</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No tab assigned to the &#39;</span><span class="si">{</span><span class="n">role</span><span class="si">}</span><span class="s2">&#39; role.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">validator</span><span class="p">(</span><span class="n">tab</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,697 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.engine.generator &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ml_D_D.engine.generator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ml_D_D.engine.generator</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">generator.py</span>
+<span class="sd">PyTorch training script generator.</span>
+
+<span class="sd">Takes the live graph state from all three pipeline tabs and emits a</span>
+<span class="sd">complete, runnable train.py file.</span>
+
+<span class="sd">Public:</span>
+<span class="sd">    generate_pytorch()  -&gt; str   full script as a string</span>
+<span class="sd">    export_pytorch()             file-dialog save, wired to menu</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">textwrap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.engine.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_graph</span><span class="p">,</span> <span class="n">topological_sort</span><span class="p">,</span> <span class="n">get_tab_by_role</span><span class="p">,</span> <span class="n">GraphNode</span>
+
+
+<span class="c1">#  PyTorch module name mapping</span>
+<span class="c1">#  block label  -&gt;  (torch_module, arg_template)</span>
+<span class="c1">#  {param} tokens in arg_template are filled from the node&#39;s param values.</span>
+
+<span class="n">_LAYER_MAP</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># Layers</span>
+    <span class="s2">&quot;Linear&quot;</span><span class="p">:</span>          <span class="p">(</span><span class="s2">&quot;nn.Linear&quot;</span><span class="p">,</span>          <span class="s2">&quot;</span><span class="si">{in_features}</span><span class="s2">, </span><span class="si">{out_features}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Conv2D&quot;</span><span class="p">:</span>          <span class="p">(</span><span class="s2">&quot;nn.Conv2d&quot;</span><span class="p">,</span>           <span class="s2">&quot;</span><span class="si">{in_channels}</span><span class="s2">, </span><span class="si">{out_channels}</span><span class="s2">, kernel_size=</span><span class="si">{kernel_size}</span><span class="s2">, stride=</span><span class="si">{stride}</span><span class="s2">, padding=</span><span class="si">{padding}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;ConvTranspose2D&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;nn.ConvTranspose2d&quot;</span><span class="p">,</span>  <span class="s2">&quot;</span><span class="si">{in_channels}</span><span class="s2">, </span><span class="si">{out_channels}</span><span class="s2">, kernel_size=</span><span class="si">{kernel_size}</span><span class="s2">, stride=</span><span class="si">{stride}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Flatten&quot;</span><span class="p">:</span>         <span class="p">(</span><span class="s2">&quot;nn.Flatten&quot;</span><span class="p">,</span>          <span class="s2">&quot;&quot;</span><span class="p">),</span>
+    <span class="c1"># Activations</span>
+    <span class="s2">&quot;ReLU&quot;</span><span class="p">:</span>            <span class="p">(</span><span class="s2">&quot;nn.ReLU&quot;</span><span class="p">,</span>             <span class="s2">&quot;&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Sigmoid&quot;</span><span class="p">:</span>         <span class="p">(</span><span class="s2">&quot;nn.Sigmoid&quot;</span><span class="p">,</span>          <span class="s2">&quot;&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Tanh&quot;</span><span class="p">:</span>            <span class="p">(</span><span class="s2">&quot;nn.Tanh&quot;</span><span class="p">,</span>             <span class="s2">&quot;&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Softmax&quot;</span><span class="p">:</span>         <span class="p">(</span><span class="s2">&quot;nn.Softmax&quot;</span><span class="p">,</span>          <span class="s2">&quot;dim=</span><span class="si">{dim}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;GELU&quot;</span><span class="p">:</span>            <span class="p">(</span><span class="s2">&quot;nn.GELU&quot;</span><span class="p">,</span>             <span class="s2">&quot;&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;LeakyReLU&quot;</span><span class="p">:</span>       <span class="p">(</span><span class="s2">&quot;nn.LeakyReLU&quot;</span><span class="p">,</span>        <span class="s2">&quot;negative_slope=</span><span class="si">{negative_slope}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="c1"># Normalisation</span>
+    <span class="s2">&quot;BatchNorm2D&quot;</span><span class="p">:</span>     <span class="p">(</span><span class="s2">&quot;nn.BatchNorm2d&quot;</span><span class="p">,</span>      <span class="s2">&quot;</span><span class="si">{num_features}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;LayerNorm&quot;</span><span class="p">:</span>       <span class="p">(</span><span class="s2">&quot;nn.LayerNorm&quot;</span><span class="p">,</span>        <span class="s2">&quot;</span><span class="si">{normalized_shape}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;GroupNorm&quot;</span><span class="p">:</span>       <span class="p">(</span><span class="s2">&quot;nn.GroupNorm&quot;</span><span class="p">,</span>        <span class="s2">&quot;</span><span class="si">{num_groups}</span><span class="s2">, </span><span class="si">{num_channels}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Dropout&quot;</span><span class="p">:</span>         <span class="p">(</span><span class="s2">&quot;nn.Dropout&quot;</span><span class="p">,</span>          <span class="s2">&quot;p=</span><span class="si">{p}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="c1"># Pooling</span>
+    <span class="s2">&quot;MaxPool2D&quot;</span><span class="p">:</span>       <span class="p">(</span><span class="s2">&quot;nn.MaxPool2d&quot;</span><span class="p">,</span>        <span class="s2">&quot;kernel_size=</span><span class="si">{kernel_size}</span><span class="s2">, stride=</span><span class="si">{stride}</span><span class="s2">, padding=</span><span class="si">{padding}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;AvgPool2D&quot;</span><span class="p">:</span>       <span class="p">(</span><span class="s2">&quot;nn.AvgPool2d&quot;</span><span class="p">,</span>        <span class="s2">&quot;kernel_size=</span><span class="si">{kernel_size}</span><span class="s2">, stride=</span><span class="si">{stride}</span><span class="s2">, padding=</span><span class="si">{padding}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;AdaptiveAvgPool2D&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;nn.AdaptiveAvgPool2d&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{output_size}</span><span class="s2">&quot;</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">_LOSS_MAP</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;CrossEntropyLoss&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;nn.CrossEntropyLoss&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;MSELoss&quot;</span><span class="p">:</span>          <span class="p">(</span><span class="s2">&quot;nn.MSELoss&quot;</span><span class="p">,</span>          <span class="s2">&quot;reduction=&#39;</span><span class="si">{reduction}</span><span class="s2">&#39;&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;BCELoss&quot;</span><span class="p">:</span>          <span class="p">(</span><span class="s2">&quot;nn.BCELoss&quot;</span><span class="p">,</span>          <span class="s2">&quot;reduction=&#39;</span><span class="si">{reduction}</span><span class="s2">&#39;&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;BCEWithLogits&quot;</span><span class="p">:</span>    <span class="p">(</span><span class="s2">&quot;nn.BCEWithLogitsLoss&quot;</span><span class="p">,</span><span class="s2">&quot;reduction=&#39;</span><span class="si">{reduction}</span><span class="s2">&#39;&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;NLLLoss&quot;</span><span class="p">:</span>          <span class="p">(</span><span class="s2">&quot;nn.NLLLoss&quot;</span><span class="p">,</span>          <span class="s2">&quot;reduction=&#39;</span><span class="si">{reduction}</span><span class="s2">&#39;&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;HuberLoss&quot;</span><span class="p">:</span>        <span class="p">(</span><span class="s2">&quot;nn.HuberLoss&quot;</span><span class="p">,</span>        <span class="s2">&quot;delta=</span><span class="si">{delta}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;KLDivLoss&quot;</span><span class="p">:</span>        <span class="p">(</span><span class="s2">&quot;nn.KLDivLoss&quot;</span><span class="p">,</span>        <span class="s2">&quot;reduction=&#39;</span><span class="si">{reduction}</span><span class="s2">&#39;&quot;</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">_OPTIM_MAP</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Adam&quot;</span><span class="p">:</span>    <span class="p">(</span><span class="s2">&quot;optim.Adam&quot;</span><span class="p">,</span>    <span class="s2">&quot;lr=</span><span class="si">{lr}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;AdamW&quot;</span><span class="p">:</span>   <span class="p">(</span><span class="s2">&quot;optim.AdamW&quot;</span><span class="p">,</span>   <span class="s2">&quot;lr=</span><span class="si">{lr}</span><span class="s2">, weight_decay=</span><span class="si">{weight_decay}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;SGD&quot;</span><span class="p">:</span>     <span class="p">(</span><span class="s2">&quot;optim.SGD&quot;</span><span class="p">,</span>     <span class="s2">&quot;lr=</span><span class="si">{lr}</span><span class="s2">, momentum=</span><span class="si">{momentum}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;RMSprop&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;optim.RMSprop&quot;</span><span class="p">,</span> <span class="s2">&quot;lr=</span><span class="si">{lr}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Adagrad&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;optim.Adagrad&quot;</span><span class="p">,</span> <span class="s2">&quot;lr=</span><span class="si">{lr}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;LBFGS&quot;</span><span class="p">:</span>   <span class="p">(</span><span class="s2">&quot;optim.LBFGS&quot;</span><span class="p">,</span>  <span class="s2">&quot;lr=</span><span class="si">{lr}</span><span class="s2">&quot;</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">_DATASET_MAP</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;MNIST&quot;</span><span class="p">:</span>        <span class="p">(</span><span class="s2">&quot;datasets.MNIST&quot;</span><span class="p">,</span>        <span class="s2">&quot;root=&#39;</span><span class="si">{root}</span><span class="s2">&#39;, train=</span><span class="si">{train}</span><span class="s2">, download=</span><span class="si">{download}</span><span class="s2">, transform=transform&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;CIFAR10&quot;</span><span class="p">:</span>      <span class="p">(</span><span class="s2">&quot;datasets.CIFAR10&quot;</span><span class="p">,</span>      <span class="s2">&quot;root=&#39;</span><span class="si">{root}</span><span class="s2">&#39;, train=</span><span class="si">{train}</span><span class="s2">, download=</span><span class="si">{download}</span><span class="s2">, transform=transform&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;CIFAR100&quot;</span><span class="p">:</span>     <span class="p">(</span><span class="s2">&quot;datasets.CIFAR100&quot;</span><span class="p">,</span>     <span class="s2">&quot;root=&#39;</span><span class="si">{root}</span><span class="s2">&#39;, train=</span><span class="si">{train}</span><span class="s2">, download=</span><span class="si">{download}</span><span class="s2">, transform=transform&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;FashionMNIST&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;datasets.FashionMNIST&quot;</span><span class="p">,</span> <span class="s2">&quot;root=&#39;</span><span class="si">{root}</span><span class="s2">&#39;, train=</span><span class="si">{train}</span><span class="s2">, download=</span><span class="si">{download}</span><span class="s2">, transform=transform&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;ImageFolder&quot;</span><span class="p">:</span>  <span class="p">(</span><span class="s2">&quot;ImageFolder&quot;</span><span class="p">,</span>           <span class="s2">&quot;root=&#39;</span><span class="si">{root}</span><span class="s2">&#39;, transform=transform&quot;</span><span class="p">),</span>
+
+<span class="p">}</span>
+
+<span class="n">_AUGMENTATION_MAP</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;RandomCrop&quot;</span><span class="p">:</span>     <span class="p">(</span><span class="s2">&quot;transforms.RandomCrop&quot;</span><span class="p">,</span>     <span class="s2">&quot;</span><span class="si">{size}</span><span class="s2">, padding=</span><span class="si">{padding}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;RandomHFlip&quot;</span><span class="p">:</span>    <span class="p">(</span><span class="s2">&quot;transforms.RandomHorizontalFlip&quot;</span><span class="p">,</span> <span class="s2">&quot;p=</span><span class="si">{p}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;RandomVFlip&quot;</span><span class="p">:</span>    <span class="p">(</span><span class="s2">&quot;transforms.RandomVerticalFlip&quot;</span><span class="p">,</span>   <span class="s2">&quot;p=</span><span class="si">{p}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;ColorJitter&quot;</span><span class="p">:</span>    <span class="p">(</span><span class="s2">&quot;transforms.ColorJitter&quot;</span><span class="p">,</span>    <span class="s2">&quot;brightness=</span><span class="si">{brightness}</span><span class="s2">, contrast=</span><span class="si">{contrast}</span><span class="s2">, saturation=</span><span class="si">{saturation}</span><span class="s2">, hue=</span><span class="si">{hue}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;RandomRotation&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;transforms.RandomRotation&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{degrees}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Normalize&quot;</span><span class="p">:</span>      <span class="p">(</span><span class="s2">&quot;transforms.Normalize&quot;</span><span class="p">,</span>      <span class="s2">&quot;mean=</span><span class="si">{mean}</span><span class="s2">, std=</span><span class="si">{std}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;Resize&quot;</span><span class="p">:</span>         <span class="p">(</span><span class="s2">&quot;transforms.Resize&quot;</span><span class="p">,</span>         <span class="s2">&quot;</span><span class="si">{size}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;CenterCrop&quot;</span><span class="p">:</span>     <span class="p">(</span><span class="s2">&quot;transforms.CenterCrop&quot;</span><span class="p">,</span>     <span class="s2">&quot;</span><span class="si">{size}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;ToTensor&quot;</span><span class="p">:</span>       <span class="p">(</span><span class="s2">&quot;transforms.ToTensor&quot;</span><span class="p">,</span>       <span class="s2">&quot;&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;GaussianBlur&quot;</span><span class="p">:</span>   <span class="p">(</span><span class="s2">&quot;transforms.GaussianBlur&quot;</span><span class="p">,</span>   <span class="s2">&quot;</span><span class="si">{kernel_size}</span><span class="s2">, sigma=</span><span class="si">{sigma}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;RandomErasing&quot;</span><span class="p">:</span>  <span class="p">(</span><span class="s2">&quot;transforms.RandomErasing&quot;</span><span class="p">,</span>  <span class="s2">&quot;p=</span><span class="si">{p}</span><span class="s2">&quot;</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="c1">#  Param defaults  (used when a node field is left empty)</span>
+
+<span class="n">_PARAM_DEFAULTS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># Layers</span>
+    <span class="s2">&quot;kernel_size&quot;</span><span class="p">:</span>      <span class="s2">&quot;3&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;stride&quot;</span><span class="p">:</span>           <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;padding&quot;</span><span class="p">:</span>          <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;num_layers&quot;</span><span class="p">:</span>       <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+    <span class="c1"># Flatten</span>
+    <span class="s2">&quot;start_dim&quot;</span><span class="p">:</span>        <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;end_dim&quot;</span><span class="p">:</span>          <span class="s2">&quot;-1&quot;</span><span class="p">,</span>
+    <span class="c1"># Activations</span>
+    <span class="s2">&quot;dim&quot;</span><span class="p">:</span>              <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;negative_slope&quot;</span><span class="p">:</span>   <span class="s2">&quot;0.01&quot;</span><span class="p">,</span>
+    <span class="c1"># Normalisation</span>
+    <span class="s2">&quot;eps&quot;</span><span class="p">:</span>              <span class="s2">&quot;1e-5&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;momentum&quot;</span><span class="p">:</span>         <span class="s2">&quot;0.1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;p&quot;</span><span class="p">:</span>                <span class="s2">&quot;0.5&quot;</span><span class="p">,</span>
+    <span class="c1"># Pooling</span>
+    <span class="s2">&quot;output_size&quot;</span><span class="p">:</span>      <span class="s2">&quot;(1, 1)&quot;</span><span class="p">,</span>
+    <span class="c1"># Loss</span>
+    <span class="s2">&quot;reduction&quot;</span><span class="p">:</span>        <span class="s2">&quot;&#39;mean&#39;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;delta&quot;</span><span class="p">:</span>            <span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
+    <span class="c1"># Optimizers</span>
+    <span class="s2">&quot;lr&quot;</span><span class="p">:</span>               <span class="s2">&quot;1e-3&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;weight_decay&quot;</span><span class="p">:</span>     <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;alpha&quot;</span><span class="p">:</span>            <span class="s2">&quot;0.99&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;lr_decay&quot;</span><span class="p">:</span>         <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;max_iter&quot;</span><span class="p">:</span>         <span class="s2">&quot;20&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;history_size&quot;</span><span class="p">:</span>     <span class="s2">&quot;100&quot;</span><span class="p">,</span>
+    <span class="c1"># Schedulers</span>
+    <span class="s2">&quot;step_size&quot;</span><span class="p">:</span>        <span class="s2">&quot;10&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gamma&quot;</span><span class="p">:</span>            <span class="s2">&quot;0.1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;T_max&quot;</span><span class="p">:</span>            <span class="s2">&quot;50&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;eta_min&quot;</span><span class="p">:</span>          <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mode&quot;</span><span class="p">:</span>             <span class="s2">&quot;&#39;min&#39;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;factor&quot;</span><span class="p">:</span>           <span class="s2">&quot;0.1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;patience&quot;</span><span class="p">:</span>         <span class="s2">&quot;10&quot;</span><span class="p">,</span>
+    <span class="c1"># Augmentation</span>
+    <span class="s2">&quot;size&quot;</span><span class="p">:</span>             <span class="s2">&quot;224&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;degrees&quot;</span><span class="p">:</span>          <span class="s2">&quot;15&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;brightness&quot;</span><span class="p">:</span>       <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;contrast&quot;</span><span class="p">:</span>         <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;saturation&quot;</span><span class="p">:</span>       <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;hue&quot;</span><span class="p">:</span>              <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mean&quot;</span><span class="p">:</span>             <span class="s2">&quot;[0.485, 0.456, 0.406]&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;std&quot;</span><span class="p">:</span>              <span class="s2">&quot;[0.229, 0.224, 0.225]&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sigma&quot;</span><span class="p">:</span>            <span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;scale&quot;</span><span class="p">:</span>            <span class="s2">&quot;(0.02, 0.33)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ratio&quot;</span><span class="p">:</span>            <span class="s2">&quot;(0.3, 3.3)&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_p</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">GraphNode</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fallback</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a node&#39;s param value, its default, or a fallback placeholder.&quot;&quot;&quot;</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">val</span> <span class="ow">or</span> <span class="n">_PARAM_DEFAULTS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">fallback</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fill</span><span class="p">(</span><span class="n">template</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">GraphNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fill a template string with a node&#39;s param values.</span>
+<span class="sd">    Empty fields fall back to _PARAM_DEFAULTS before using &#39;...&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">template</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">filled</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="k">else</span> <span class="n">_PARAM_DEFAULTS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;{&quot;</span> <span class="o">+</span> <span class="n">k</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span><span class="p">,</span> <span class="n">filled</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_safe_name</span><span class="p">(</span><span class="n">block_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Turn &#39;BatchNorm2D&#39; + 2 into &#39;batch_norm2d_2&#39;.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">block_label</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_I</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="s2">&quot;    &quot;</span> <span class="o">*</span> <span class="n">n</span>
+
+<span class="c1">#  Section generators</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_model</span><span class="p">(</span><span class="n">tab</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate the nn.Module class from the Model tab.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">topological_sort</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">build_graph</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="c1"># Filter to layer-type nodes only (skip Input/Output)</span>
+    <span class="n">layer_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;Input&quot;</span><span class="p">,</span> <span class="s2">&quot;Output&quot;</span><span class="p">)]</span>
+
+    <span class="n">init_lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">forward_lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layer_nodes</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">block_label</span>
+        <span class="n">attr</span>  <span class="o">=</span> <span class="n">_safe_name</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_LAYER_MAP</span><span class="p">:</span>
+            <span class="n">init_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;# NOTE: No codegen mapping for &#39;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">module</span><span class="p">,</span> <span class="n">template</span> <span class="o">=</span> <span class="n">_LAYER_MAP</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">_fill</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+        <span class="n">init_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;self.</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+        <span class="c1"># LSTM returns tuple — unpack hidden states</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="s2">&quot;LSTM&quot;</span><span class="p">:</span>
+            <span class="n">forward_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;x, _ = self.</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2">(x)&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">forward_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;x = self.</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2">(x)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Get input shape from Input node if present</span>
+    <span class="n">input_node</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="o">==</span> <span class="s2">&quot;Input&quot;</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">input_shape</span> <span class="o">=</span> <span class="n">_p</span><span class="p">(</span><span class="n">input_node</span><span class="p">,</span> <span class="s2">&quot;shape&quot;</span><span class="p">,</span> <span class="s2">&quot;# define input shape&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">input_node</span> <span class="k">else</span> <span class="s2">&quot;# define input shape&quot;</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;class Model(nn.Module):&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_I</span><span class="p">()</span><span class="si">}</span><span class="s2">def __init__(self):&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_I</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">super().__init__()&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">init_lines</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_I</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}{</span><span class="n">l</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_I</span><span class="p">()</span><span class="si">}</span><span class="s2">def forward(self, x):&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_I</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"># Input shape: </span><span class="si">{</span><span class="n">input_shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">forward_lines</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_I</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}{</span><span class="n">l</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_I</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">return x&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_data</span><span class="p">(</span><span class="n">tab</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate the data pipeline section.</span>
+
+<span class="sd">    Mirrors the dual-chain / single-chain logic in runner.py:</span>
+<span class="sd">      Mode A (dual chain): separate DataLoader (train) and DataLoader (val),</span>
+<span class="sd">               each with their own ancestor chain -&gt; separate transforms,</span>
+<span class="sd">               datasets and loaders.</span>
+<span class="sd">      Mode B (single chain): one DataLoader (train), optional val_split.</span>
+
+<span class="sd">    Returns (main_code_block, preamble_lines_before_class).</span>
+<span class="sd">    The preamble contains the transform definitions.</span>
+<span class="sd">    The main block contains the dataset + dataloader instantiation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_forge.engine.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_graph</span><span class="p">,</span> <span class="n">topological_sort</span><span class="p">,</span> <span class="n">_DATASET_BLOCKS</span><span class="p">,</span> <span class="n">_AUG_BLOCKS</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ordered</span> <span class="o">=</span> <span class="n">topological_sort</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">ordered</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">build_graph</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_chain_for_loader</span><span class="p">(</span><span class="n">loader_node</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return topologically-ordered ancestor nodes for a loader.&quot;&quot;&quot;</span>
+        <span class="n">targets</span>   <span class="o">=</span> <span class="p">{</span><span class="n">loader_node</span><span class="o">.</span><span class="n">ntag</span><span class="p">}</span>
+        <span class="n">ancestors</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">changed</span>   <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">while</span> <span class="n">changed</span><span class="p">:</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="n">a2</span><span class="p">)</span> <span class="ow">in</span> <span class="n">tab</span><span class="p">[</span><span class="s2">&quot;links&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">sp</span> <span class="o">=</span> <span class="n">a1</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">);</span> <span class="n">dp</span> <span class="o">=</span> <span class="n">a2</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="n">src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">sp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">sp</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="n">dst</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;node_</span><span class="si">{</span><span class="n">dp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">dp</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="k">if</span> <span class="n">dst</span> <span class="ow">in</span> <span class="n">targets</span> <span class="ow">and</span> <span class="n">src</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ancestors</span><span class="p">:</span>
+                        <span class="n">ancestors</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+                        <span class="n">targets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+                        <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">ordered</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">ntag</span> <span class="ow">in</span> <span class="n">ancestors</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_transform_lines</span><span class="p">(</span><span class="n">chain_nodes</span><span class="p">,</span> <span class="n">var_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return lines that define a transforms.Compose(...) for var_name.&quot;&quot;&quot;</span>
+        <span class="n">aug</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">chain_nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="n">_AUGMENTATION_MAP</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">aug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2"> = transforms.ToTensor()&quot;</span><span class="p">]</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2"> = transforms.Compose([&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">aug</span><span class="p">:</span>
+            <span class="n">module</span><span class="p">,</span> <span class="n">template</span> <span class="o">=</span> <span class="n">_AUGMENTATION_MAP</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">block_label</span><span class="p">]</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="n">_fill</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">),&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;])&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lines</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dataset_line</span><span class="p">(</span><span class="n">ds_node</span><span class="p">,</span> <span class="n">transform_var</span><span class="p">,</span> <span class="n">var_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a line instantiating a dataset.&quot;&quot;&quot;</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">ds_node</span><span class="o">.</span><span class="n">block_label</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_DATASET_MAP</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2"> = ...  # unsupported dataset: </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">module</span><span class="p">,</span> <span class="n">template</span> <span class="o">=</span> <span class="n">_DATASET_MAP</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">_fill</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">ds_node</span><span class="p">)</span>
+        <span class="c1"># substitute the correct transform variable name</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;transform=transform&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;transform=</span><span class="si">{</span><span class="n">transform_var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_loader_line</span><span class="p">(</span><span class="n">loader_node</span><span class="p">,</span> <span class="n">dataset_var</span><span class="p">,</span> <span class="n">loader_var</span><span class="p">,</span> <span class="n">shuffle_default</span><span class="p">):</span>
+        <span class="n">bs</span> <span class="o">=</span> <span class="n">_p</span><span class="p">(</span><span class="n">loader_node</span><span class="p">,</span> <span class="s2">&quot;batch_size&quot;</span><span class="p">,</span> <span class="s2">&quot;32&quot;</span><span class="p">)</span>
+        <span class="n">nw</span> <span class="o">=</span> <span class="n">_p</span><span class="p">(</span><span class="n">loader_node</span><span class="p">,</span> <span class="s2">&quot;num_workers&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">)</span>
+        <span class="n">pm</span> <span class="o">=</span> <span class="n">_p</span><span class="p">(</span><span class="n">loader_node</span><span class="p">,</span> <span class="s2">&quot;pin_memory&quot;</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">)</span>
+        <span class="n">sh</span> <span class="o">=</span> <span class="n">_p</span><span class="p">(</span><span class="n">loader_node</span><span class="p">,</span> <span class="s2">&quot;shuffle&quot;</span><span class="p">,</span> <span class="n">shuffle_default</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">loader_var</span><span class="si">}</span><span class="s2"> = DataLoader(</span><span class="si">{</span><span class="n">dataset_var</span><span class="si">}</span><span class="s2">, batch_size=</span><span class="si">{</span><span class="n">bs</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;shuffle=</span><span class="si">{</span><span class="n">sh</span><span class="si">}</span><span class="s2">, num_workers=</span><span class="si">{</span><span class="n">nw</span><span class="si">}</span><span class="s2">, pin_memory=</span><span class="si">{</span><span class="n">pm</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Detect mode</span>
+    <span class="n">train_loader_node</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;DataLoader (train)&quot;</span><span class="p">,</span> <span class="s2">&quot;DataLoader&quot;</span><span class="p">)),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">val_loader_node</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="o">==</span> <span class="s2">&quot;DataLoader (val)&quot;</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="n">preamble</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">main</span><span class="p">:</span>     <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Mode A: dual chain</span>
+    <span class="k">if</span> <span class="n">train_loader_node</span> <span class="ow">and</span> <span class="n">val_loader_node</span><span class="p">:</span>
+        <span class="n">train_chain</span> <span class="o">=</span> <span class="n">_chain_for_loader</span><span class="p">(</span><span class="n">train_loader_node</span><span class="p">)</span>
+        <span class="n">val_chain</span>   <span class="o">=</span> <span class="n">_chain_for_loader</span><span class="p">(</span><span class="n">val_loader_node</span><span class="p">)</span>
+
+        <span class="n">train_ds_node</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">train_chain</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="n">_DATASET_BLOCKS</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">val_ds_node</span>   <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">val_chain</span>   <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="n">_DATASET_BLOCKS</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">preamble</span> <span class="o">+=</span> <span class="n">_transform_lines</span><span class="p">(</span><span class="n">train_chain</span><span class="p">,</span> <span class="s2">&quot;train_transform&quot;</span><span class="p">)</span>
+        <span class="n">preamble</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">]</span>
+        <span class="n">preamble</span> <span class="o">+=</span> <span class="n">_transform_lines</span><span class="p">(</span><span class="n">val_chain</span><span class="p">,</span> <span class="s2">&quot;val_transform&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">train_ds_node</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_dataset_line</span><span class="p">(</span><span class="n">train_ds_node</span><span class="p">,</span> <span class="s2">&quot;train_transform&quot;</span><span class="p">,</span> <span class="s2">&quot;train_dataset&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;train_dataset = ...  # no dataset found in train chain&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">val_ds_node</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_dataset_line</span><span class="p">(</span><span class="n">val_ds_node</span><span class="p">,</span> <span class="s2">&quot;val_transform&quot;</span><span class="p">,</span> <span class="s2">&quot;val_dataset&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;val_dataset = ...  # no dataset found in val chain&quot;</span><span class="p">)</span>
+
+        <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_loader_line</span><span class="p">(</span><span class="n">train_loader_node</span><span class="p">,</span> <span class="s2">&quot;train_dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;train_loader&quot;</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">))</span>
+        <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_loader_line</span><span class="p">(</span><span class="n">val_loader_node</span><span class="p">,</span>   <span class="s2">&quot;val_dataset&quot;</span><span class="p">,</span>   <span class="s2">&quot;val_loader&quot;</span><span class="p">,</span>   <span class="s2">&quot;False&quot;</span><span class="p">))</span>
+
+    <span class="c1"># Mode B: single chain</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="p">(</span><span class="n">_chain_for_loader</span><span class="p">(</span><span class="n">train_loader_node</span><span class="p">)</span>
+                 <span class="k">if</span> <span class="n">train_loader_node</span> <span class="k">else</span> <span class="n">ordered</span><span class="p">)</span>
+        <span class="n">ds_node</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">chain</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="n">_DATASET_BLOCKS</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">preamble</span> <span class="o">+=</span> <span class="n">_transform_lines</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="s2">&quot;transform&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ds_node</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_dataset_line</span><span class="p">(</span><span class="n">ds_node</span><span class="p">,</span> <span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;dataset = ...  # configure your dataset&quot;</span><span class="p">)</span>
+
+        <span class="n">split_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="o">==</span> <span class="s2">&quot;RandomSplit&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">split_nodes</span><span class="p">:</span>
+            <span class="n">lengths</span> <span class="o">=</span> <span class="n">_p</span><span class="p">(</span><span class="n">split_nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;lengths&quot;</span><span class="p">,</span> <span class="s2">&quot;0.8, 0.2&quot;</span><span class="p">)</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;train_dataset, val_dataset = random_split(dataset, [</span><span class="si">{</span><span class="n">lengths</span><span class="si">}</span><span class="s2">])&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;train_dataset = dataset&quot;</span><span class="p">)</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;val_dataset   = None  # add a val DataLoader node for a proper split&quot;</span><span class="p">)</span>
+
+        <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">train_loader_node</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_loader_line</span><span class="p">(</span><span class="n">train_loader_node</span><span class="p">,</span> <span class="s2">&quot;train_dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;train_loader&quot;</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)&quot;</span><span class="p">)</span>
+
+        <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False) &quot;</span>
+            <span class="s2">&quot;if val_dataset else None&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">main</span><span class="p">),</span> <span class="n">preamble</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_training</span><span class="p">(</span><span class="n">tab</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate loss and optimizer lines.</span>
+<span class="sd">    Returns (loss_line, optim_line).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="n">loss_node</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="n">_LOSS_MAP</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">loss_node</span><span class="p">:</span>
+        <span class="n">module</span><span class="p">,</span> <span class="n">template</span> <span class="o">=</span> <span class="n">_LOSS_MAP</span><span class="p">[</span><span class="n">loss_node</span><span class="o">.</span><span class="n">block_label</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">_fill</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">loss_node</span><span class="p">)</span>
+        <span class="n">loss_line</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;criterion = </span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">).to(device)&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">loss_line</span> <span class="o">=</span> <span class="s2">&quot;criterion = nn.CrossEntropyLoss().to(device)&quot;</span>
+
+    <span class="n">optim_node</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">block_label</span> <span class="ow">in</span> <span class="n">_OPTIM_MAP</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">optim_node</span><span class="p">:</span>
+        <span class="n">module</span><span class="p">,</span> <span class="n">template</span> <span class="o">=</span> <span class="n">_OPTIM_MAP</span><span class="p">[</span><span class="n">optim_node</span><span class="o">.</span><span class="n">block_label</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">_fill</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">optim_node</span><span class="p">)</span>
+        <span class="n">optim_line</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;optimizer = </span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">(model.parameters(), </span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">optim_line</span> <span class="o">=</span> <span class="s2">&quot;optimizer = optim.Adam(model.parameters(), lr=1e-3)&quot;</span>
+
+    <span class="k">return</span> <span class="n">loss_line</span><span class="p">,</span> <span class="n">optim_line</span>
+
+
+<span class="c1"># script assembly!</span>
+
+<span class="n">_HEADER</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\</span>
+<span class="s1">&quot;&quot;&quot;</span>
+<span class="s1">train.py - MLForge auto-generated training script.</span>
+<span class="s1">Edit freely. All hyperparameters are in this file.</span>
+<span class="s1">&quot;&quot;&quot;</span>
+<span class="s1">&#39;&#39;&#39;</span>
+
+<span class="n">_IMPORTS</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">import torch</span>
+<span class="s2">from torch import nn, optim</span>
+<span class="s2">from torch.utils.data import DataLoader, random_split</span>
+<span class="s2">from torchvision import datasets, transforms</span>
+<span class="s2">from torchvision.datasets import ImageFolder</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">_DEVICE</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">device = torch.device(&quot;cuda&quot; if torch.cuda.is_available() else &quot;cpu&quot;)</span>
+<span class="s2">print(f&quot;Using device: </span><span class="si">{device}</span><span class="s2">&quot;)</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">_TRAIN_LOOP</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">def train(model, loader, criterion, optimizer):</span>
+<span class="s2">    model.train()</span>
+<span class="s2">    total_loss = 0.0</span>
+<span class="s2">    for X, y in loader:</span>
+<span class="s2">        X, y = X.to(device), y.to(device)</span>
+<span class="s2">        optimizer.zero_grad()</span>
+<span class="s2">        logits = model(X)</span>
+<span class="s2">        loss   = criterion(logits, y)</span>
+<span class="s2">        loss.backward()</span>
+<span class="s2">        optimizer.step()</span>
+<span class="s2">        total_loss += loss.item()</span>
+<span class="s2">    return total_loss / len(loader)</span>
+
+
+<span class="s2">@torch.inference_mode()</span>
+<span class="s2">def evaluate(model, loader, criterion):</span>
+<span class="s2">    if loader is None:</span>
+<span class="s2">        return None</span>
+<span class="s2">    model.eval()</span>
+<span class="s2">    total_loss = 0.0</span>
+<span class="s2">    correct = 0</span>
+<span class="s2">    total   = 0</span>
+<span class="s2">    for X, y in loader:</span>
+<span class="s2">        X, y   = X.to(device), y.to(device)</span>
+<span class="s2">        logits = model(X)</span>
+<span class="s2">        loss   = criterion(logits, y)</span>
+<span class="s2">        total_loss += loss.item()</span>
+<span class="s2">        preds   = logits.argmax(dim=1)</span>
+<span class="s2">        correct += (preds == y).sum().item()</span>
+<span class="s2">        total   += y.size(0)</span>
+<span class="s2">    acc = correct / total if total &gt; 0 else 0.0</span>
+<span class="s2">    return total_loss / len(loader), acc</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">_MAIN_LOOP</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">if __name__ == &quot;__main__&quot;:</span>
+<span class="s2">    EPOCHS = 20</span>
+
+<span class="s2">    model     = Model().to(device)</span>
+<span class="s2">    print(model)</span>
+
+<span class="s2">    # Data</span>
+<span class="si">{data_block}</span>
+
+<span class="s2">    # Training setup</span>
+<span class="si">{loss_line}</span>
+<span class="si">{optim_line}</span>
+
+<span class="s2">    # Training loop</span>
+<span class="s2">    for epoch in range(EPOCHS):</span>
+<span class="s2">        train_loss = train(model, train_loader, criterion, optimizer)</span>
+<span class="s2">        val_result = evaluate(model, val_loader, criterion)</span>
+
+<span class="s2">        if val_result:</span>
+<span class="s2">            val_loss, val_acc = val_result</span>
+<span class="s2">            print(f&quot;Epoch {{epoch+1:&gt;3}}/{{EPOCHS}}  &quot;</span>
+<span class="s2">                  f&quot;train_loss={{train_loss:.4f}}  &quot;</span>
+<span class="s2">                  f&quot;val_loss={{val_loss:.4f}}  &quot;</span>
+<span class="s2">                  f&quot;val_acc={{val_acc:.4f}}&quot;)</span>
+<span class="s2">        else:</span>
+<span class="s2">            print(f&quot;Epoch {{epoch+1:&gt;3}}/{{EPOCHS}}  train_loss={{train_loss:.4f}}&quot;)</span>
+
+<span class="s2">    torch.save(model.state_dict(), &quot;model.pth&quot;)</span>
+<span class="s2">    print(&quot;Saved model.pth&quot;)</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="generate_pytorch">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.generator.generate_pytorch">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_pytorch</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build and return the full training script as a string.</span>
+<span class="sd">    Reads live graph state from all three pipeline tabs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model_tab</span>    <span class="o">=</span> <span class="n">get_tab_by_role</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">)</span>
+    <span class="n">data_tab</span>     <span class="o">=</span> <span class="n">get_tab_by_role</span><span class="p">(</span><span class="s2">&quot;data_prep&quot;</span><span class="p">)</span>
+    <span class="n">training_tab</span> <span class="o">=</span> <span class="n">get_tab_by_role</span><span class="p">(</span><span class="s2">&quot;training&quot;</span><span class="p">)</span>
+
+    <span class="c1"># ── Model class ───────────────────────────────────────</span>
+    <span class="n">model_code</span> <span class="o">=</span> <span class="n">_gen_model</span><span class="p">(</span><span class="n">model_tab</span><span class="p">)</span> <span class="k">if</span> <span class="n">model_tab</span> <span class="k">else</span> <span class="p">(</span>
+        <span class="s2">&quot;class Model(nn.Module):</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;    def __init__(self): super().__init__()</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;    def forward(self, x): return x&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ── Data pipeline ─────────────────────────────────────</span>
+    <span class="k">if</span> <span class="n">data_tab</span><span class="p">:</span>
+        <span class="n">data_code</span><span class="p">,</span> <span class="n">aug_lines</span> <span class="o">=</span> <span class="n">_gen_data</span><span class="p">(</span><span class="n">data_tab</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">data_code</span> <span class="o">=</span> <span class="s2">&quot;train_loader = ...  # configure your data pipeline&quot;</span>
+        <span class="n">aug_lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;transform = transforms.ToTensor()&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Indent data_code for use inside if __name__ block</span>
+    <span class="n">data_indented</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">data_code</span><span class="p">,</span> <span class="s2">&quot;    &quot;</span><span class="p">)</span>
+    <span class="c1"># aug_lines is a preamble (transform definitions) placed before the model class</span>
+    <span class="n">aug_block</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">aug_lines</span><span class="p">)</span>
+    <span class="c1"># Section header adapts to single vs dual chain</span>
+    <span class="n">has_dual</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="s2">&quot;train_transform&quot;</span> <span class="ow">in</span> <span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">aug_lines</span><span class="p">)</span>
+    <span class="n">transforms_header</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;# Transforms (train + val)&quot;</span>
+                         <span class="k">if</span> <span class="n">has_dual</span> <span class="k">else</span>
+                         <span class="s2">&quot;# Transforms&quot;</span><span class="p">)</span>
+
+    <span class="c1"># ── Training setup ────────────────────────────────────</span>
+    <span class="k">if</span> <span class="n">training_tab</span><span class="p">:</span>
+        <span class="n">loss_line</span><span class="p">,</span> <span class="n">optim_line</span> <span class="o">=</span> <span class="n">_gen_training</span><span class="p">(</span><span class="n">training_tab</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">loss_line</span>  <span class="o">=</span> <span class="s2">&quot;criterion = nn.CrossEntropyLoss().to(device)&quot;</span>
+        <span class="n">optim_line</span> <span class="o">=</span> <span class="s2">&quot;optimizer = optim.Adam(model.parameters(), lr=1e-3)&quot;</span>
+
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_HEADER</span><span class="p">,</span>
+        <span class="n">_IMPORTS</span><span class="p">,</span>
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">_DEVICE</span><span class="p">,</span>
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">transforms_header</span><span class="p">,</span>
+        <span class="n">aug_block</span><span class="p">,</span>
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;# Model&quot;</span><span class="p">,</span>
+        <span class="n">model_code</span><span class="p">,</span>
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;# Train / eval functions &quot;</span><span class="p">,</span>
+        <span class="n">_TRAIN_LOOP</span><span class="p">,</span>
+        <span class="n">_MAIN_LOOP</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">data_block</span><span class="o">=</span><span class="n">data_indented</span><span class="p">,</span>
+            <span class="n">loss_line</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">loss_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">optim_line</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">optim_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+
+<span class="c1">#  Export entry point (wired to menu)</span>
+
+<div class="viewcode-block" id="export_pytorch">
+<a class="viewcode-back" href="../../../ml_D_D.engine.html#ml_D_D.engine.generator.export_pytorch">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">export_pytorch</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Open a save-file dialog and write the generated script.</span>
+<span class="sd">    Wired to File &gt; Export &gt; Python &gt; PyTorch.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dearpygui.dearpygui</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dpg</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_forge.ui.console</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_save</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">app_data</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">app_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;file_path_name&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.py&quot;</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">+=</span> <span class="s2">&quot;.py&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="n">generate_pytorch</span><span class="p">()</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+            <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Exported PyTorch script → </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;success&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Export failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;export_pytorch_dialog&quot;</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="s2">&quot;export_pytorch_dialog&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_cancel</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">app_data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;export_pytorch_dialog&quot;</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="s2">&quot;export_pytorch_dialog&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">dpg</span><span class="o">.</span><span class="n">does_item_exist</span><span class="p">(</span><span class="s2">&quot;export_pytorch_dialog&quot;</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="s2">&quot;export_pytorch_dialog&quot;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">file_dialog</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Export PyTorch Script&quot;</span><span class="p">,</span>
+        <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;export_pytorch_dialog&quot;</span><span class="p">,</span>
+        <span class="n">callback</span><span class="o">=</span><span class="n">_on_save</span><span class="p">,</span>
+        <span class="n">cancel_callback</span><span class="o">=</span><span class="n">_on_cancel</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="mi">700</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="mi">450</span><span class="p">,</span>
+        <span class="n">default_filename</span><span class="o">=</span><span class="s2">&quot;train&quot;</span><span class="p">,</span>
+        <span class="n">modal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_file_extension</span><span class="p">(</span><span class="s2">&quot;.py&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">220</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_file_extension</span><span class="p">(</span><span class="s2">&quot;.*&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

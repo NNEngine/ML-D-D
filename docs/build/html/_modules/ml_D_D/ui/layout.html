@@ -1,0 +1,372 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_D_D.ui.layout &mdash; ml_D_D v1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8a93c2b0"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ml_D_D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ml_D_D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ml_D_D.ui.layout</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ml_D_D.ui.layout</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">ui/layout.py</span>
+<span class="sd">Builds the main DearPyGui window and all child panels:</span>
+<span class="sd">  - Block palette (left)</span>
+<span class="sd">  - Canvas tab bar (centre)</span>
+<span class="sd">  - Training config + plots (right)</span>
+<span class="sd">  - Console log (bottom)</span>
+<span class="sd">  - Status bar (bottom edge)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dearpygui.dearpygui</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dpg</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.constants</span><span class="w">      </span><span class="kn">import</span> <span class="n">PALETTE_W</span><span class="p">,</span> <span class="n">TRAIN_W</span><span class="p">,</span> <span class="n">CONSOLE_H</span><span class="p">,</span> <span class="n">STATUSBAR_H</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.console</span><span class="w">     </span><span class="kn">import</span> <span class="n">clear_console</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.palette</span><span class="w">     </span><span class="kn">import</span> <span class="n">on_search</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.summary</span><span class="w">     </span><span class="kn">import</span> <span class="n">refresh_model_summary</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.graph.tabs</span><span class="w">     </span><span class="kn">import</span> <span class="n">on_tab_change</span>
+
+<span class="n">PIPELINE_BAR_H</span> <span class="o">=</span> <span class="mi">24</span>
+
+
+<span class="c1"># Default plot values</span>
+
+<span class="n">_demo_e</span>    <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">21</span><span class="p">))</span>
+<span class="n">_demo_tloss</span> <span class="o">=</span> <span class="p">[</span><span class="mf">2.3</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.18</span> <span class="o">*</span> <span class="n">e</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.05</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">_demo_e</span><span class="p">]</span>
+<span class="n">_demo_vloss</span> <span class="o">=</span> <span class="p">[</span><span class="mf">2.5</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.15</span> <span class="o">*</span> <span class="n">e</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.08</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">_demo_e</span><span class="p">]</span>
+<span class="n">_demo_tacc</span>  <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.22</span> <span class="o">*</span> <span class="n">e</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.95</span>   <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">_demo_e</span><span class="p">]</span>
+<span class="n">_demo_vacc</span>  <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.18</span> <span class="o">*</span> <span class="n">e</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.97</span>   <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">_demo_e</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="build_main_window">
+<a class="viewcode-back" href="../../../ml_D_D.ui.html#ml_D_D.ui.layout.build_main_window">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_main_window</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ml_D_D.ui.toolbar</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_toolbar</span>
+
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">window</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;main_window&quot;</span><span class="p">,</span> <span class="n">no_title_bar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_move</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">no_resize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_scrollbar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_collapse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">build_toolbar</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">_build_pipeline_bar</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">_build_middle_row</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">_build_console</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">_build_statusbar</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_toolbar_placeholder</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Toolbar is built separately by ui/toolbar.py — this is a no-op hook.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>  <span class="c1"># toolbar.build_toolbar() is called before build_main_window()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_middle_row</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">horizontal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;top_row&quot;</span><span class="p">):</span>
+        <span class="n">_build_palette_panel</span><span class="p">()</span>
+        <span class="n">_build_canvas_panel</span><span class="p">()</span>
+        <span class="n">_build_train_panel</span><span class="p">()</span>
+
+
+<span class="c1"># Pipeline bar</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_pipeline_bar</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">child_window</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;pipeline_bar&quot;</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">PIPELINE_BAR_H</span><span class="p">,</span>
+                           <span class="n">border</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">no_scrollbar</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">horizontal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;pipeline_bar_content&quot;</span><span class="p">):</span>
+            <span class="k">pass</span> <span class="c1"># Pipeline tabs injected by graph.tabs.new_tab() before first render</span>
+
+
+<span class="c1"># Palette</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_palette_panel</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">child_window</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;palette_panel&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">PALETTE_W</span><span class="p">,</span>
+                           <span class="n">border</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_scrollbar</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Blocks&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_input_text</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">hint</span><span class="o">=</span><span class="s2">&quot;Search...&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                           <span class="n">callback</span><span class="o">=</span><span class="n">on_search</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;search_box&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;palette_content&quot;</span><span class="p">):</span>
+            <span class="k">pass</span>
+
+
+<span class="c1"># Canvas</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_canvas_panel</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">child_window</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;canvas_panel&quot;</span><span class="p">,</span> <span class="n">border</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_scrollbar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">height</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">tab_bar</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;canvas_tabbar&quot;</span><span class="p">,</span>
+                         <span class="n">callback</span><span class="o">=</span><span class="n">on_tab_change</span><span class="p">,</span>
+                         <span class="n">reorderable</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">pass</span> <span class="c1"># tabs injected by graph.tabs.new_tab() before first render</span>
+
+
+<span class="c1"># Training config</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_train_panel</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">child_window</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;train_panel&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">TRAIN_W</span><span class="p">,</span>
+                           <span class="n">border</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_scrollbar</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Training Config&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+        <span class="c1"># Progress bar</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Progress&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_progress_bar</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;train_progress&quot;</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                             <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">overlay</span><span class="o">=</span><span class="s2">&quot;Idle&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+        <span class="n">_build_general_section</span><span class="p">()</span>
+        <span class="n">_build_device_section</span><span class="p">()</span>
+        <span class="n">_build_checkpoint_section</span><span class="p">()</span>
+        <span class="n">_build_earlystop_section</span><span class="p">()</span>
+        <span class="n">_build_summary_section</span><span class="p">()</span>
+        <span class="n">_build_loss_plot</span><span class="p">()</span>
+        <span class="n">_build_acc_plot</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_general_section</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;General&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_input_int</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Epochs&quot;</span><span class="p">,</span>    <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_epochs&quot;</span><span class="p">,</span>
+                          <span class="n">default_value</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>  <span class="n">width</span><span class="o">=</span><span class="mi">110</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_input_float</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Val Split&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_val_split&quot;</span><span class="p">,</span>
+                            <span class="n">default_value</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">110</span><span class="p">,</span>
+                            <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.2f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mf">0.99</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;cfg_val_split&quot;</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Only used when Data Prep has a single DataLoader.</span><span class="se">\n</span><span class="s2">Disabled when separate DataLoader (val) is present.&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_input_int</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Seed&quot;</span><span class="p">,</span>      <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_seed&quot;</span><span class="p">,</span>
+                          <span class="n">default_value</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>  <span class="n">width</span><span class="o">=</span><span class="mi">110</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_checkbox</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Shuffle&quot;</span><span class="p">,</span>    <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_shuffle&quot;</span><span class="p">,</span>
+                         <span class="n">default_value</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;cfg_shuffle&quot;</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Only used when Data Prep has a single DataLoader.</span><span class="se">\n</span><span class="s2">Disabled when separate DataLoader (val) is present.&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_device_section</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Device&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_combo</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Device&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_device&quot;</span><span class="p">,</span>
+                      <span class="n">items</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="s2">&quot;mps&quot;</span><span class="p">],</span>
+                      <span class="n">default_value</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">110</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_checkbox</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;AMP (fp16)&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_amp&quot;</span><span class="p">,</span>
+                         <span class="n">default_value</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_checkpoint_section</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Checkpointing&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_input_text</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Save Dir&quot;</span><span class="p">,</span>    <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_ckpt_dir&quot;</span><span class="p">,</span>
+                           <span class="n">default_value</span><span class="o">=</span><span class="s2">&quot;./checkpoints&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_input_int</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Save Every&quot;</span><span class="p">,</span>   <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_ckpt_every&quot;</span><span class="p">,</span>
+                          <span class="n">default_value</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">110</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_checkbox</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Save Best Only&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_ckpt_best&quot;</span><span class="p">,</span>
+                         <span class="n">default_value</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_combo</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Monitor&quot;</span><span class="p">,</span>          <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_ckpt_monitor&quot;</span><span class="p">,</span>
+                      <span class="n">items</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;val_loss&quot;</span><span class="p">,</span> <span class="s2">&quot;val_acc&quot;</span><span class="p">,</span> <span class="s2">&quot;train_loss&quot;</span><span class="p">],</span>
+                      <span class="n">default_value</span><span class="o">=</span><span class="s2">&quot;val_loss&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">110</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_earlystop_section</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Early Stopping&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_checkbox</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Enable&quot;</span><span class="p">,</span>    <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_es_enable&quot;</span><span class="p">,</span>
+                         <span class="n">default_value</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_input_int</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Patience&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_es_patience&quot;</span><span class="p">,</span>
+                          <span class="n">default_value</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">110</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_input_float</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Min Delta&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_es_min_delta&quot;</span><span class="p">,</span>
+                            <span class="n">default_value</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">110</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.5f</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_summary_section</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Model Summary&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Refresh&quot;</span><span class="p">,</span> <span class="n">small</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                       <span class="n">callback</span><span class="o">=</span><span class="n">refresh_model_summary</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">child_window</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;summary_child&quot;</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">220</span><span class="p">,</span>
+                              <span class="n">border</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">no_scrollbar</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;summary_content&quot;</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;No nodes on canvas.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_loss_plot</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Loss Curve&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">horizontal</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Batch smooth:&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_slider_int</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;cfg_batch_smooth&quot;</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                               <span class="n">min_value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;cfg_batch_smooth&quot;</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Number of batch loss values to average.</span><span class="se">\n</span><span class="s2">1 = raw (noisy), higher = smoother line.&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">155</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;loss_plot&quot;</span><span class="p">,</span> <span class="n">no_title</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_plot_legend</span><span class="p">()</span>
+            <span class="n">xax</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">add_plot_axis</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvXAxis</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Epoch&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">set_axis_limits</span><span class="p">(</span><span class="n">xax</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">22</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">plot_axis</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvYAxis</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Loss&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;loss_y&quot;</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_line_series</span><span class="p">(</span><span class="n">_demo_e</span><span class="p">,</span> <span class="n">_demo_tloss</span><span class="p">,</span>
+                                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Train&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;series_train_loss&quot;</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_line_series</span><span class="p">(</span><span class="n">_demo_e</span><span class="p">,</span> <span class="n">_demo_vloss</span><span class="p">,</span>
+                                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Val&quot;</span><span class="p">,</span>   <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;series_val_loss&quot;</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_line_series</span><span class="p">([],</span> <span class="p">[],</span>
+                                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Batch&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;series_batch_loss&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_acc_plot</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">collapsing_header</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Accuracy Curve&quot;</span><span class="p">,</span> <span class="n">default_open</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">155</span><span class="p">,</span> <span class="n">width</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;acc_plot&quot;</span><span class="p">,</span> <span class="n">no_title</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_plot_legend</span><span class="p">()</span>
+            <span class="n">xax</span> <span class="o">=</span> <span class="n">dpg</span><span class="o">.</span><span class="n">add_plot_axis</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvXAxis</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Epoch&quot;</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">set_axis_limits</span><span class="p">(</span><span class="n">xax</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">22</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">plot_axis</span><span class="p">(</span><span class="n">dpg</span><span class="o">.</span><span class="n">mvYAxis</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Accuracy&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;acc_y&quot;</span><span class="p">):</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_line_series</span><span class="p">(</span><span class="n">_demo_e</span><span class="p">,</span> <span class="n">_demo_tacc</span><span class="p">,</span>
+                                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Train&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;series_train_acc&quot;</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_line_series</span><span class="p">(</span><span class="n">_demo_e</span><span class="p">,</span> <span class="n">_demo_vacc</span><span class="p">,</span>
+                                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Val&quot;</span><span class="p">,</span>   <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;series_val_acc&quot;</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+
+<span class="c1"># Console</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_console</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">child_window</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;console_window&quot;</span><span class="p">,</span> <span class="n">border</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                           <span class="n">no_scrollbar</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">horizontal_scrollbar</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">horizontal</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Console&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">lvl</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="p">(</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)),</span>
+                <span class="p">(</span><span class="s2">&quot;OK&quot;</span><span class="p">,</span>   <span class="p">(</span><span class="mi">80</span><span class="p">,</span>  <span class="mi">220</span><span class="p">,</span> <span class="mi">120</span><span class="p">)),</span>
+                <span class="p">(</span><span class="s2">&quot;WARN&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">220</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span>  <span class="mi">60</span><span class="p">)),</span>
+                <span class="p">(</span><span class="s2">&quot;ERR&quot;</span><span class="p">,</span>  <span class="p">(</span><span class="mi">220</span><span class="p">,</span>  <span class="mi">80</span><span class="p">,</span>  <span class="mi">80</span><span class="p">)),</span>
+            <span class="p">]:</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">lvl</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">)</span>
+                <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_button</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Clear&quot;</span><span class="p">,</span> <span class="n">small</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">clear_console</span><span class="p">)</span>
+        <span class="n">dpg</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;console_content&quot;</span><span class="p">):</span>
+            <span class="k">pass</span>
+
+
+<span class="c1"># Status bar</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_statusbar</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">child_window</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;statusbar&quot;</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">STATUSBAR_H</span><span class="p">,</span>
+                           <span class="n">border</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">no_scrollbar</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">dpg</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">horizontal</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;[-]&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;status_dot&quot;</span><span class="p">,</span>  <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">220</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Ready&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;status_text&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Nodes: 0   Links: 0&quot;</span><span class="p">,</span>
+                         <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;status_nodes&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Undo: 0  Redo: 0&quot;</span><span class="p">,</span>
+                         <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;status_undo&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">140</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">60</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;Project:&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_input_text</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;status_project&quot;</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="s2">&quot;untitled&quot;</span><span class="p">,</span>
+                               <span class="n">width</span><span class="o">=</span><span class="mi">140</span><span class="p">,</span> <span class="n">hint</span><span class="o">=</span><span class="s2">&quot;project name&quot;</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">60</span><span class="p">))</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_spacer</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+            <span class="n">dpg</span><span class="o">.</span><span class="n">add_text</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;Session: %Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M&quot;</span><span class="p">),</span>
+                         <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shivam Sharma.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
