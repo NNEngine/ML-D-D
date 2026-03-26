@@ -79,7 +79,7 @@ def refresh_pipeline_bar() -> None:
     errors = warnings = 0
     if not any_empty:
         try:
-            from ml_forge.engine.graph import validate_pipeline
+            from ml_D_D.engine.graph import validate_pipeline
             result   = validate_pipeline()
             errors   = len(result.errors)
             warnings = len(result.warnings)

@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ML D&D"
+name = "mldd-core"
 version = "1.0.1"
 description = "Visual Drag-and-drop Machine Learning Trainer"
 readme = "README.md"
@@ -19,6 +19,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
+
 dependencies = [
     "dearpygui>=1.11.0",
     "Pillow>=9.0.0",
@@ -30,8 +31,12 @@ training = [
     "torchvision>=0.15.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ml_D_D*"]
+
 [tool.setuptools.package-data]
-"ML D&D" = ["templates/*.mlf"]
+ml_D_D = ["templates/*.mlf"]
 
 [project.scripts]
-ml-D-D = "ML D&D.main:main"
+mldd = "ml_D_D.main:main"
