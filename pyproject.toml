@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mldd-core"
-version = "1.0.4"
+version = "1.0.7"
 description = "Visual Drag-and-drop Machine Learning Trainer"
 readme = "README.md"
 license = {file = "LICENSE"}
