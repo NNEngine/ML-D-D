@@ -138,7 +138,7 @@ def _lock_node(ntag: str) -> None:
 
 
 def update_block_labels() -> None:
-     """
+    """
     Update labels or display information for training pipeline blocks.
 
     Intended to dynamically refresh node labels (e.g., model name, dataset info,
