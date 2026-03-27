@@ -21,6 +21,8 @@ import pathlib
 import queue
 import threading
 import time
+import torch
+from torch.utils.data import DataLoader
 
 import dearpygui.dearpygui as dpg
 
@@ -231,8 +233,7 @@ def _build_dataloaders(
         ... )
         >>> print(len(train_loader.dataset), "training samples")
     """
-    import torch
-    from torch.utils.data import DataLoader, random_split
+    from torch.utils.data import random_split
     from torchvision import datasets, transforms
     from torchvision.datasets import ImageFolder
     from ml_D_D.engine.graph import (topological_sort, get_tab_by_role,

@@ -12,11 +12,11 @@ active_tab_id: int | None = None
 console_lines: list = []
 
 train_state: dict = {
-    "status":       "idle",
-    "epoch":        0,
+    "status": "idle",
+    "epoch": 0,
     "total_epochs": 20,
-    "start_time":   None,
-    "real":         False,
+    "start_time": None,
+    "real": False,
 }
 
 search_state: dict = {"query": ""}
